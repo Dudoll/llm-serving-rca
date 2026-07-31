@@ -23,7 +23,7 @@
 - [x] Baseline runner 和汇总脚本
 - [x] 并发 1/8/32 小规模 Pipeline pilot
 - [x] 完整实验与系统学习路线
-- [ ] 正式并发 Baseline（1/2/4/8/16/32，各 5 次）
+- [x] 正式并发 Baseline（1/2/4/8/16/32，各 5 次）
 - [ ] Prefill/Decode 分离实验
 - [ ] Open-loop 饱和实验
 - [ ] 混合负载 RCA
@@ -38,6 +38,7 @@ cd ~/projects/llm-serving-rca
 ./scripts/health_check.sh
 ./scripts/run_smoke.sh
 ./scripts/run_pilot.sh
+./scripts/capture_server_logs.sh
 python3 benchmark/summarize_results.py
 ./scripts/setup_analysis_env.sh
 ./.venv/bin/python benchmark/plot_baseline.py
@@ -54,7 +55,14 @@ python3 benchmark/summarize_results.py
 ```bash
 ./scripts/run_baseline.sh
 python3 benchmark/summarize_results.py
+python3 benchmark/aggregate_baseline.py
+python3 benchmark/summarize_gpu_telemetry.py
+./.venv/bin/python benchmark/plot_baseline.py
 ```
+
+新实验由 `benchmark/poll_vllm_metrics.py` 每 0.5 秒保存 selected vLLM
+metrics 到 JSONL，用于保留瞬时 queue、running/waiting requests、KV Cache 和
+preemption 变化。首轮正式 baseline 早于该采集器，因此只具备 metrics 前后快照。
 
 默认配置位于：
 
@@ -66,6 +74,11 @@ python3 benchmark/summarize_results.py
 完整路线见 `docs/experiment-plan.md`。它定义了从 closed-loop baseline、
 Prefill/Decode 分解、open-loop 饱和、KV Cache 压力、混合负载 RCA 到最终
 优化复验的顺序和验收条件。
+
+正式 baseline 已完成 30 个 run、3,840 个请求，0 失败。c1 到 c32 的
+median output throughput 从 140.93 增至 1400.14 tok/s；c32 仍有吞吐收益，
+但相对 c16 仅增加 25.82%，同时 P99 TTFT 增加 105.59%。完整结论和限制见
+`reports/baseline.md`。
 
 ## 证据规则
 

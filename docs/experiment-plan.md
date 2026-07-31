@@ -75,6 +75,9 @@ digest、model revision、vLLM EngineCore 启动路径。
 
 ### 阶段 1：正式 closed-loop concurrency baseline
 
+状态：已完成。30 个 run、3,840 个请求、0 失败；结果见
+`reports/baseline.md`。
+
 问题：并发增加时，吞吐在哪一点开始趋于饱和，TTFT/TPOT/P99 如何变化？
 
 固定项：
@@ -100,6 +103,8 @@ Docker stats、server 和 load-generator 日志。
 `reports/baseline.md`。如果任一 run 失败，先停止批量实验并 RCA，不跳过。
 
 ### 阶段 2：Prefill 与 Decode 负载分解
+
+状态：待执行；时间序列 metrics 采集器已完成并通过 smoke。
 
 问题：长 prompt 和长 output 分别影响哪类指标？
 

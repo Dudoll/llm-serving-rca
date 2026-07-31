@@ -29,6 +29,8 @@ if ! container_running; then
     exit 1
 fi
 
+require_command jq
+
 mkdir -p \
     "${PROJECT_ROOT}/results/raw" \
     "${PROJECT_ROOT}/results/telemetry" \
@@ -37,12 +39,52 @@ mkdir -p \
 for concurrency in ${CONCURRENCIES}; do
     for repetition in $(seq 1 "${REPETITIONS}"); do
         run_id="baseline-in${INPUT_LEN}-out${OUTPUT_LEN}-c${concurrency}-r${repetition}"
+        result_file="${PROJECT_ROOT}/results/raw/${run_id}.json"
         run_log="${PROJECT_ROOT}/artifacts/logs/${run_id}.log"
         gpu_file="${PROJECT_ROOT}/results/telemetry/${run_id}-gpu.csv"
+        metrics_timeseries="${PROJECT_ROOT}/results/telemetry/${run_id}-metrics.jsonl"
         metrics_before="${PROJECT_ROOT}/results/telemetry/${run_id}-metrics-before.txt"
         metrics_after="${PROJECT_ROOT}/results/telemetry/${run_id}-metrics-after.txt"
         stats_before="${PROJECT_ROOT}/results/telemetry/${run_id}-docker-before.txt"
         stats_after="${PROJECT_ROOT}/results/telemetry/${run_id}-docker-after.txt"
+
+        if [[ -f "${result_file}" ]]; then
+            if jq --exit-status \
+                --arg run_id "${run_id}" \
+                --arg input_len "${INPUT_LEN}" \
+                --arg output_len "${OUTPUT_LEN}" \
+                --arg concurrency "${concurrency}" \
+                --arg repetition "${repetition}" \
+                --argjson expected_prompts "${NUM_PROMPTS}" \
+                '(.run_id == $run_id)
+                 and ((.input_len | tostring) == $input_len)
+                 and ((.output_len | tostring) == $output_len)
+                 and ((.concurrency | tostring) == $concurrency)
+                 and ((.repetition | tostring) == $repetition)
+                 and (.completed == $expected_prompts)
+                 and (.failed == 0)' \
+                "${result_file}" >/dev/null; then
+                echo "Skipping verified completed run: ${run_id}"
+                continue
+            fi
+
+            echo "Refusing to overwrite incomplete or mismatched result: ${result_file}" >&2
+            exit 1
+        fi
+
+        for existing_artifact in \
+            "${run_log}" \
+            "${gpu_file}" \
+            "${metrics_timeseries}" \
+            "${metrics_before}" \
+            "${metrics_after}" \
+            "${stats_before}" \
+            "${stats_after}"; do
+            if [[ -e "${existing_artifact}" ]]; then
+                echo "Refusing to overwrite artifact without a verified result: ${existing_artifact}" >&2
+                exit 1
+            fi
+        done
 
         echo "Running ${run_id}"
 
@@ -56,9 +98,17 @@ for concurrency in ${CONCURRENCIES}; do
             >"${gpu_file}" 2>&1 &
         monitor_pid=$!
 
+        python3 "${PROJECT_ROOT}/benchmark/poll_vllm_metrics.py" \
+            --url "${LOCAL_API_URL}/metrics" \
+            --output "${metrics_timeseries}" \
+            --interval 0.5 &
+        metrics_monitor_pid=$!
+
         stop_monitor() {
             kill "${monitor_pid}" 2>/dev/null || true
+            kill "${metrics_monitor_pid}" 2>/dev/null || true
             wait "${monitor_pid}" 2>/dev/null || true
+            wait "${metrics_monitor_pid}" 2>/dev/null || true
         }
         trap stop_monitor EXIT INT TERM
 

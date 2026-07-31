@@ -1,0 +1,2 @@
+CONTAINER ID   NAME              CPU %     MEM USAGE / LIMIT     MEM %     NET I/O          BLOCK I/O        PIDS
+2f29d35c2448   vllm-rca-server   1.37%     3.556GiB / 15.54GiB   22.89%    160kB / 1.71MB   4.37GB / 227MB   140

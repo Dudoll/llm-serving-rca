@@ -1,0 +1,56 @@
+WARNING 07-31 06:10:47 [interface.py:995] Using 'pin_memory=False' as WSL is detected. This may slow down performance.
+INFO 07-31 06:10:58 [importing.py:53] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 07-31 06:10:58 [importing.py:88] Triton not installed or not compatible; certain GPU-related functions will not be available.
+W0731 06:10:58.702000 1 torch/utils/cpp_extension.py:140] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'
+INFO 07-31 06:11:00 [main.py:69] Unspecified platform detected, switching to CPU Platform instead.
+WARNING 07-31 06:11:00 [cpu.py:454] Failed to import from vllm._C_AVX2: ModuleNotFoundError("No module named 'vllm._C_AVX2'")
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x70dd92f234c0>, trust_remote_code=False, seed=0, num_prompts=128, dataset_name='random', no_stream=False, dataset_path=None, no_oversample=False, skip_chat_template=False, enable_multimodal_chat=False, disable_shuffle=False, custom_output_len=256, custom_ensure_client_side_data=False, spec_bench_output_len=256, spec_bench_category=None, sonnet_input_len=550, sonnet_output_len=150, sonnet_prefix_len=200, sharegpt_output_len=None, timed_trace_chunk_hash_size=16, timed_trace_sec_multiplier=1, timed_trace_label_timestamp='timestamp', timed_trace_label_input_length='input_length', timed_trace_label_output_length='output_length', timed_trace_label_hash_ids='hash_ids', blazedit_min_distance=0.0, blazedit_max_distance=1.0, asr_max_audio_len_sec=inf, asr_min_audio_len_sec=0.0, random_input_len=1024, random_output_len=128, random_range_ratio='0', random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 1}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, bfcl_categories=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, speed_bench_dataset_subset='qualitative', speed_bench_output_len=4096, speed_bench_category=None, label=None, backend='vllm', base_url=None, host='127.0.0.1', port=8000, endpoint='/v1/completions', header=None, max_concurrency=16, model='Qwen/Qwen3-0.6B', input_len=512, output_len=128, tokenizer='/root/.cache/huggingface/hub/models--Qwen--Qwen3-0.6B/snapshots/c1899de289a04d12100db370d81485cdf75e47ca', tokenizer_mode='auto', use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, disable_tqdm=False, num_warmups=8, profile=False, save_result=True, save_detailed=True, append_result=False, metadata=['phase=baseline', 'run_id=baseline-in512-out128-c16-r3', 'concurrency=16', 'repetition=3', 'input_len=512', 'output_len=128'], result_dir='/workspace/results/raw', result_filename='baseline-in512-out128-c16-r3.json', ignore_eos=True, self_timed=None, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='50,95,99', goodput=None, request_id_prefix='bench-3e5ba53b-', top_p=None, top_k=None, min_p=None, temperature=0.0, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, served_model_name=None, lora_modules=None, lora_assignment='random', ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=0, chat_template_kwargs=None, extra_body=None, skip_tokenizer_init=False, insecure=False, plot_timeline=False, timeline_itl_thresholds='25,50', plot_dataset_stats=False)
+INFO 07-31 06:11:01 [utils.py:90] Sampling input_len from [512, 512] and output_len from [128, 128]
+Starting initial single prompt test run...
+Skipping endpoint ready check.
+Warming up with 8 requests...
+  0%|          | 0/8 [00:00<?, ?it/s] 12%|█▎        | 1/8 [00:01<00:11,  1.65s/it]100%|██████████| 8/8 [00:01<00:00,  4.79it/s]
+Warmup run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 16
+  0%|          | 0/128 [00:00<?, ?it/s]  1%|          | 1/128 [00:01<03:53,  1.84s/it] 10%|█         | 13/128 [00:01<00:12,  9.01it/s] 15%|█▍        | 19/128 [00:03<00:15,  7.11it/s] 22%|██▏       | 28/128 [00:03<00:08, 12.34it/s] 27%|██▋       | 34/128 [00:04<00:13,  6.97it/s] 34%|███▎      | 43/128 [00:05<00:07, 10.91it/s] 38%|███▊      | 49/128 [00:06<00:11,  6.93it/s] 46%|████▌     | 59/128 [00:06<00:06, 10.85it/s] 51%|█████     | 65/128 [00:08<00:08,  7.05it/s] 59%|█████▊    | 75/128 [00:08<00:04, 10.74it/s] 63%|██████▎   | 81/128 [00:10<00:06,  7.11it/s] 71%|███████   | 91/128 [00:10<00:03, 10.70it/s] 76%|███████▌  | 97/128 [00:12<00:04,  7.14it/s] 84%|████████▎ | 107/128 [00:12<00:01, 10.68it/s] 88%|████████▊ | 113/128 [00:14<00:02,  7.22it/s]100%|██████████| 128/128 [00:14<00:00,  9.06it/s]
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     128       
+Failed requests:                         0         
+Maximum request concurrency:             16        
+Benchmark duration (s):                  14.73     
+Total input tokens:                      65536     
+Total generated tokens:                  16384     
+Request throughput (req/s):              8.69      
+Output token throughput (tok/s):         1112.09   
+Peak output token throughput (tok/s):    1392.00   
+Peak concurrent requests:                32.00     
+Total token throughput (tok/s):          5560.46   
+---------------Time to First Token----------------
+Mean TTFT (ms):                          192.19    
+Median TTFT (ms):                        210.37    
+P50 TTFT (ms):                           210.37    
+P95 TTFT (ms):                           309.67    
+P99 TTFT (ms):                           380.32    
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          12.96     
+Median TPOT (ms):                        12.89     
+P50 TPOT (ms):                           12.89     
+P95 TPOT (ms):                           13.88     
+P99 TPOT (ms):                           14.16     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           12.96     
+Median ITL (ms):                         11.69     
+P50 ITL (ms):                            11.69     
+P95 ITL (ms):                            13.31     
+P99 ITL (ms):                            71.68     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          1838.66   
+Median E2EL (ms):                        1846.91   
+P50 E2EL (ms):                           1846.91   
+P95 E2EL (ms):                           1894.10   
+P99 E2EL (ms):                           1957.69   
+==================================================
