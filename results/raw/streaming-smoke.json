@@ -1,0 +1,35 @@
+{
+  "repetitions": 3,
+  "median_ttft_ms": 16.344215007848106,
+  "median_e2e_ms": 203.5541799996281,
+  "median_tpot_ms": 6.09881361296791,
+  "results": [
+    {
+      "ttft_ms": 18.994957994436845,
+      "tpot_ms": 6.09881361296791,
+      "e2e_ms": 208.05817999644205,
+      "completion_tokens": 32,
+      "stream_content_events": 32,
+      "text": "<think>\nOkay, the user wants me to explain virtual memory in one sentence. Let me start by recalling what virtual memory is. From what I remember, it",
+      "repetition": 1
+    },
+    {
+      "ttft_ms": 16.344215007848106,
+      "tpot_ms": 6.039031128767097,
+      "e2e_ms": 203.5541799996281,
+      "completion_tokens": 32,
+      "stream_content_events": 32,
+      "text": "<think>\nOkay, the user wants me to explain virtual memory in one sentence. Let me start by recalling what virtual memory is. From what I remember, it",
+      "repetition": 2
+    },
+    {
+      "ttft_ms": 13.798362997476943,
+      "tpot_ms": 6.100279096450146,
+      "e2e_ms": 202.90701498743147,
+      "completion_tokens": 32,
+      "stream_content_events": 32,
+      "text": "<think>\nOkay, the user wants me to explain virtual memory in one sentence. Let me start by recalling what virtual memory is. From what I remember, it",
+      "repetition": 3
+    }
+  ]
+}
