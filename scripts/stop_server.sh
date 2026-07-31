@@ -10,7 +10,16 @@ require_command docker
 
 if container_exists; then
     docker stop --timeout 30 "${CONTAINER_NAME}"
-    echo "Stopped ${CONTAINER_NAME}. The container was created with --rm and is removed after stopping."
+    for _ in $(seq 1 30); do
+        if ! container_exists; then
+            echo "Stopped ${CONTAINER_NAME}. The --rm container has been removed."
+            exit 0
+        fi
+        sleep 1
+    done
+
+    echo "Timed out waiting for ${CONTAINER_NAME} to be removed." >&2
+    exit 1
 else
     echo "Container ${CONTAINER_NAME} does not exist."
 fi
