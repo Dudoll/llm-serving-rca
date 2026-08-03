@@ -15,6 +15,8 @@
 
 ## 当前状态
 
+统一进度入口：[`docs/progress.md`](docs/progress.md)
+
 - [x] GPU 和 Docker 透传已验证
 - [x] WSL2 UVA 初始化错误已定位并修复
 - [x] 实验环境和服务参数已固定
