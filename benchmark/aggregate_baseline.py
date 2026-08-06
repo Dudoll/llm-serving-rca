@@ -23,9 +23,19 @@ METRICS = (
     "p99_e2el_ms",
 )
 
+# Keep legacy aliases used by reports/README.
+LEGACY_THROUGHPUT_GAIN_FIELDS = (
+    "throughput_gain_vs_c1_pct",
+    "throughput_gain_vs_previous_pct",
+)
+
 
 def values(rows: list[dict[str, str]], key: str) -> list[float]:
     return [float(row[key]) for row in rows if row.get(key, "") != ""]
+
+
+def pct_change(current: float, baseline: float) -> float:
+    return (current / baseline - 1.0) * 100.0
 
 
 def main() -> int:
@@ -48,8 +58,11 @@ def main() -> int:
         c1_rows = next((rows for concurrency, rows in ordered_groups if concurrency == 1), None)
         if c1_rows is None:
             raise ValueError(f"Missing concurrency=1 control for input={input_len}, output={output_len}")
-        c1_throughput = statistics.median(values(c1_rows, "output_throughput"))
-        previous_throughput: float | None = None
+
+        c1_medians = {
+            metric: statistics.median(values(c1_rows, metric)) for metric in METRICS
+        }
+        previous_medians: dict[str, float] | None = None
 
         for concurrency, rows in ordered_groups:
             row: dict[str, str | int | float] = {
@@ -61,28 +74,50 @@ def main() -> int:
                 "failed_total": sum(int(item["failed"]) for item in rows),
             }
 
+            medians: dict[str, float] = {}
             for metric in METRICS:
                 metric_values = values(rows, metric)
                 if not metric_values:
                     continue
-                row[f"{metric}_median"] = statistics.median(metric_values)
+                median = statistics.median(metric_values)
+                medians[metric] = median
+                row[f"{metric}_median"] = median
                 row[f"{metric}_min"] = min(metric_values)
                 row[f"{metric}_max"] = max(metric_values)
 
-            throughput = float(row["output_throughput_median"])
-            row["throughput_gain_vs_c1_pct"] = (throughput / c1_throughput - 1.0) * 100.0
-            row["throughput_gain_vs_previous_pct"] = (
-                ""
-                if previous_throughput is None
-                else (throughput / previous_throughput - 1.0) * 100.0
+            for metric in METRICS:
+                if metric not in medians:
+                    continue
+                current = medians[metric]
+                baseline = c1_medians[metric]
+                row[f"{metric}_gain_vs_c1_pct"] = (
+                    "" if baseline == 0 else pct_change(current, baseline)
+                )
+                if previous_medians is None or previous_medians.get(metric, 0) == 0:
+                    row[f"{metric}_gain_vs_previous_pct"] = ""
+                else:
+                    row[f"{metric}_gain_vs_previous_pct"] = pct_change(
+                        current, previous_medians[metric]
+                    )
+
+            # Legacy aliases for output throughput gains.
+            row["throughput_gain_vs_c1_pct"] = row.get("output_throughput_gain_vs_c1_pct", "")
+            row["throughput_gain_vs_previous_pct"] = row.get(
+                "output_throughput_gain_vs_previous_pct", ""
             )
-            previous_throughput = throughput
+
+            previous_medians = medians
             aggregate_rows.append(row)
 
     metric_columns = [
         f"{metric}_{suffix}"
         for metric in METRICS
         for suffix in ("median", "min", "max")
+    ]
+    gain_columns = [
+        field
+        for metric in METRICS
+        for field in (f"{metric}_gain_vs_c1_pct", f"{metric}_gain_vs_previous_pct")
     ]
     fieldnames = [
         "input_len",
@@ -92,8 +127,8 @@ def main() -> int:
         "completed_total",
         "failed_total",
         *metric_columns,
-        "throughput_gain_vs_c1_pct",
-        "throughput_gain_vs_previous_pct",
+        *gain_columns,
+        *LEGACY_THROUGHPUT_GAIN_FIELDS,
     ]
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -107,9 +142,9 @@ def main() -> int:
         print(
             f"in={row['input_len']} out={row['output_len']} c={row['concurrency']}: "
             f"output_tok_s={float(row['output_throughput_median']):.2f} "
+            f"({row['output_throughput_gain_vs_previous_pct']}% vs prev) "
             f"p99_ttft_ms={float(row['p99_ttft_ms_median']):.2f} "
-            f"p99_tpot_ms={float(row['p99_tpot_ms_median']):.2f} "
-            f"p99_e2el_ms={float(row['p99_e2el_ms_median']):.2f}"
+            f"({row['p99_ttft_ms_gain_vs_previous_pct']}% vs prev)"
         )
 
     return 0

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+from collections import defaultdict
 from pathlib import Path
 
 
@@ -11,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = PROJECT_ROOT / "results" / "raw"
 SUMMARY_DIR = PROJECT_ROOT / "results" / "summary"
 
-FIELDS = [
+BASE_FIELDS = [
     "run_id",
     "input_len",
     "output_len",
@@ -42,6 +43,26 @@ FIELDS = [
     "p99_e2el_ms",
 ]
 
+# Percent change vs concurrency=1 and vs previous concurrency (same workload + repetition).
+GAIN_METRICS = (
+    "request_throughput",
+    "output_throughput",
+    "p50_ttft_ms",
+    "p95_ttft_ms",
+    "p99_ttft_ms",
+    "p99_tpot_ms",
+    "p99_itl_ms",
+    "p99_e2el_ms",
+)
+
+GAIN_FIELDS = [
+    field
+    for metric in GAIN_METRICS
+    for field in (f"{metric}_gain_vs_c1_pct", f"{metric}_gain_vs_previous_pct")
+]
+
+FIELDS = [*BASE_FIELDS, *GAIN_FIELDS]
+
 
 def metadata_from(result: dict) -> dict:
     metadata = result.get("metadata")
@@ -50,19 +71,52 @@ def metadata_from(result: dict) -> dict:
     return {}
 
 
+def pct_change(current: float, baseline: float) -> float:
+    return (current / baseline - 1.0) * 100.0
+
+
 def summarize_file(path: Path) -> dict | None:
     result = json.loads(path.read_text(encoding="utf-8"))
     if "request_throughput" not in result:
         return None
 
     metadata = metadata_from(result)
-    row = {field: result.get(field, "") for field in FIELDS}
+    row = {field: result.get(field, "") for field in BASE_FIELDS}
     if not row["input_throughput"] and result.get("duration"):
         row["input_throughput"] = result.get("total_input_tokens", 0) / result["duration"]
     row["run_id"] = metadata.get("run_id", result.get("run_id", path.stem))
     for key in ("input_len", "output_len", "concurrency", "repetition"):
         row[key] = metadata.get(key, result.get(key, row.get(key, "")))
     return row
+
+
+def add_percent_gains(rows: list[dict]) -> None:
+    grouped: dict[tuple[int, int, int], list[dict]] = defaultdict(list)
+    for row in rows:
+        grouped[
+            (int(row["input_len"]), int(row["output_len"]), int(row["repetition"]))
+        ].append(row)
+
+    for group_rows in grouped.values():
+        ordered = sorted(group_rows, key=lambda item: int(item["concurrency"]))
+        c1 = next((item for item in ordered if int(item["concurrency"]) == 1), None)
+        previous: dict | None = None
+
+        for row in ordered:
+            for metric in GAIN_METRICS:
+                current = float(row[metric])
+                if c1 is None or float(c1[metric]) == 0:
+                    row[f"{metric}_gain_vs_c1_pct"] = ""
+                else:
+                    row[f"{metric}_gain_vs_c1_pct"] = pct_change(current, float(c1[metric]))
+
+                if previous is None or float(previous[metric]) == 0:
+                    row[f"{metric}_gain_vs_previous_pct"] = ""
+                else:
+                    row[f"{metric}_gain_vs_previous_pct"] = pct_change(
+                        current, float(previous[metric])
+                    )
+            previous = row
 
 
 def main() -> int:
@@ -72,6 +126,8 @@ def main() -> int:
         row = summarize_file(path)
         if row:
             rows.append(row)
+
+    add_percent_gains(rows)
 
     output_path = SUMMARY_DIR / "baseline-summary.csv"
     with output_path.open("w", newline="", encoding="utf-8") as output_file:
