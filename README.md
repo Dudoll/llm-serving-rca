@@ -71,7 +71,9 @@ preemption 变化。首轮正式 baseline 早于该采集器，因此只具备 m
 - `configs/server.env`
 - `configs/baseline.env`
 
-所有原始结果、telemetry 和日志均保存在仓库内，不应手工修改原始文件。
+原始结果、telemetry、日志和图表默认由 `.gitignore` 忽略，避免实验运行污染
+代码提交；仓库中已经提交的历史 evidence 仍保留。若要发布新的实验 evidence，
+请在复核后使用 `git add -f` 显式加入，且不要手工修改原始文件。
 
 完整路线见 `docs/experiment-plan.md`。它定义了从 closed-loop baseline、
 Prefill/Decode 分解、open-loop 饱和、KV Cache 压力、混合负载 RCA 到最终

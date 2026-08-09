@@ -18,3 +18,6 @@ results/summary/*
 !results/summary/.gitkeep
 results/telemetry/*
 !results/telemetry/.gitkeep
+
+# Local exploratory client, superseded by benchmark/streaming_client.py.
+benchmark/demo_client.py
