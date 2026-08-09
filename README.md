@@ -77,6 +77,17 @@ preemption 变化。首轮正式 baseline 早于该采集器，因此只具备 m
 Prefill/Decode 分解、open-loop 饱和、KV Cache 压力、混合负载 RCA 到最终
 优化复验的顺序和验收条件。
 
+Prefill/Decode workload matrix：
+
+```bash
+./scripts/run_prefill_decode.sh
+python3 benchmark/summarize_results.py \
+  --pattern 'pd-*.json' \
+  --output prefill-decoder-summary.csv \
+  --no-gains
+python3 benchmark/aggregate_prefill_decoder.py
+```
+
 正式 baseline 已完成 30 个 run、3,840 个请求，0 失败。c1 到 c32 的
 median output throughput 从 140.93 增至 1400.14 tok/s；c32 仍有吞吐收益，
 但相对 c16 仅增加 25.82%，同时 P99 TTFT 增加 105.59%。完整结论和限制见

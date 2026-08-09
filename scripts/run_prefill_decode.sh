@@ -6,22 +6,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/lib.sh"
 
-BASELINE_CONFIG="${PROJECT_ROOT}/configs/baseline.env"
-if [[ ! -f "${BASELINE_CONFIG}" ]]; then
-    echo "Missing baseline configuration: ${BASELINE_CONFIG}" >&2
+PD_CONFIG="${PROJECT_ROOT}/configs/prefill_decode.env"
+if [[ ! -f "${PD_CONFIG}" ]]; then
+    echo "Missing prefill/decode configuration: ${PD_CONFIG}" >&2
     exit 1
 fi
 
 # shellcheck disable=SC1090
-source "${BASELINE_CONFIG}"
+source "${PD_CONFIG}"
 
-# Allow explicit environment overrides for pilot and targeted experiments.
-INPUT_LEN="${INPUT_LEN_OVERRIDE:-${INPUT_LEN}}"
-OUTPUT_LEN="${OUTPUT_LEN_OVERRIDE:-${OUTPUT_LEN}}"
+# Allow explicit environment overrides for smoke and targeted experiments.
 NUM_PROMPTS="${NUM_PROMPTS_OVERRIDE:-${NUM_PROMPTS}}"
 NUM_WARMUPS="${NUM_WARMUPS_OVERRIDE:-${NUM_WARMUPS}}"
 REPETITIONS="${REPETITIONS_OVERRIDE:-${REPETITIONS}}"
-CONCURRENCIES="${CONCURRENCIES_OVERRIDE:-${CONCURRENCIES}}"
+CONCURRENCY="${CONCURRENCY_OVERRIDE:-${CONCURRENCIES}}"
 BETWEEN_RUN_SECONDS="${BETWEEN_RUN_SECONDS_OVERRIDE:-${BETWEEN_RUN_SECONDS}}"
 
 if ! container_running; then
@@ -29,13 +27,16 @@ if ! container_running; then
     exit 1
 fi
 
-for concurrency in ${CONCURRENCIES}; do
+while read -r case_id input_len output_len; do
+    [[ -z "${case_id}" || "${case_id}" =~ ^# ]] && continue
+
     for repetition in $(seq 1 "${REPETITIONS}"); do
-        RUN_ID="baseline-in${INPUT_LEN}-out${OUTPUT_LEN}-c${concurrency}-r${repetition}" \
-        PHASE=baseline \
-        INPUT_LEN="${INPUT_LEN}" \
-        OUTPUT_LEN="${OUTPUT_LEN}" \
-        CONCURRENCY="${concurrency}" \
+        RUN_ID="pd-${case_id}-in${input_len}-out${output_len}-c${CONCURRENCY}-r${repetition}" \
+        PHASE=prefill_decode \
+        CASE="${case_id}" \
+        INPUT_LEN="${input_len}" \
+        OUTPUT_LEN="${output_len}" \
+        CONCURRENCY="${CONCURRENCY}" \
         REPETITION="${repetition}" \
         NUM_PROMPTS="${NUM_PROMPTS}" \
         NUM_WARMUPS="${NUM_WARMUPS}" \
@@ -44,7 +45,12 @@ for concurrency in ${CONCURRENCIES}; do
         BETWEEN_RUN_SECONDS="${BETWEEN_RUN_SECONDS}" \
             "${SCRIPT_DIR}/run_one_bench.sh"
     done
-done
+done <<'EOF'
+A 128 32
+B 1536 32
+C 128 256
+D 1536 256
+EOF
 
-echo "Baseline runs completed."
+echo "Prefill/decode runs completed."
 echo "Raw results: ${PROJECT_ROOT}/results/raw"

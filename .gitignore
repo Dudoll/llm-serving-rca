@@ -5,3 +5,16 @@ __pycache__/
 *.tmp
 *.pid
 
+# Benchmark outputs are reproducible artifacts, not source files.
+artifacts/env/*
+!artifacts/env/.gitkeep
+artifacts/logs/*
+!artifacts/logs/.gitkeep
+charts/*
+!charts/.gitkeep
+results/raw/*
+!results/raw/.gitkeep
+results/summary/*
+!results/summary/.gitkeep
+results/telemetry/*
+!results/telemetry/.gitkeep

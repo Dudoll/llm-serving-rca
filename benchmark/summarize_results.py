@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 from collections import defaultdict
@@ -119,19 +120,50 @@ def add_percent_gains(rows: list[dict]) -> None:
             previous = row
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Summarize the vLLM bench JSON runs into a CSV"
+    )
+
+    parser.add_argument(
+        "--pattern",
+        default="baseline-*.json",
+        help="Glob under results/raw/ (default: baseline-*.json)"
+    )
+
+    parser.add_argument(
+        "--output",
+        default="baseline-summary.csv",
+        help="Output CSV file (default: baseline-summary.csv)",
+    )
+
+    parser.add_argument(
+        "--no-gains",
+        action="store_true",
+        default=False,
+        help="Don't calculate percent gains"
+    )
+
+    return parser.parse_args()
+
 def main() -> int:
+    args = parse_args()
     SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
     rows = []
-    for path in sorted(RAW_DIR.glob("baseline-*.json")):
+    for path in sorted(RAW_DIR.glob(args.pattern)):
         row = summarize_file(path)
         if row:
             rows.append(row)
 
-    add_percent_gains(rows)
+    if not args.no_gains:
+        add_percent_gains(rows)
+        fieldnames = FIELDS
+    else:
+        fieldnames = BASE_FIELDS
 
-    output_path = SUMMARY_DIR / "baseline-summary.csv"
+    output_path = SUMMARY_DIR / args.output
     with output_path.open("w", newline="", encoding="utf-8") as output_file:
-        writer = csv.DictWriter(output_file, fieldnames=FIELDS)
+        writer = csv.DictWriter(output_file, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
