@@ -5,19 +5,29 @@ __pycache__/
 *.tmp
 *.pid
 
-# Benchmark outputs are reproducible artifacts, not source files.
+# Large/generated benchmark outputs are ignored by default.  Curated Tier-1
+# evidence (canonical CSVs, key charts, manifests/index and checksums) may be
+# reviewed and added explicitly with git add -f; raw files are never edited.
 artifacts/env/*
 !artifacts/env/.gitkeep
 artifacts/logs/*
 !artifacts/logs/.gitkeep
 charts/*
 !charts/.gitkeep
+!charts/prefill-decoder-matrix.png
+!charts/open-loop-saturation.png
 results/raw/*
 !results/raw/.gitkeep
 results/summary/*
 !results/summary/.gitkeep
+!results/summary/prefill-decoder-aggregate.csv
+!results/summary/open-loop-aggregate.csv
 results/telemetry/*
 !results/telemetry/.gitkeep
+
+# RunBundle manifests and deterministic execution plans are reviewable Tier-1
+# evidence, so results/manifests/ and results/plans/ are intentionally not
+# ignored.  Global *.tmp above covers interrupted atomic manifest writes.
 
 # Local exploratory client, superseded by benchmark/streaming_client.py.
 benchmark/demo_client.py

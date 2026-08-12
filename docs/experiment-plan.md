@@ -9,6 +9,9 @@
 -> 验证根因 -> 实施修复 -> 复验收益和副作用 -> 形成可审计报告
 ```
 
+实验系统的组件边界、RunBundle、manifest 状态机、evidence validator 和发布分层
+由 [`design.md`](design.md) 定义；本文件负责研究问题、控制变量与阶段验收条件。
+
 当前主实验环境固定为：
 
 - Windows + WSL2 Ubuntu 22.04
@@ -32,6 +35,22 @@
 6. 将内容分为“已确认事实、基于证据的推断、尚未验证的假设”。
 7. 修复后使用同一 workload 复验，并记录吞吐、P99 和资源代价。
 8. Windows 前台应用会共享 GPU；正式运行期间记录并尽量保持负载稳定。
+9. 每个正式 run 必须有 manifest；只有 evidence validator 通过且状态为
+   `complete` 的 run 才能进入聚合。
+10. 随机种子和 planned order 在运行前写入 plan。跨配置比较优先使用 paired seed
+    blocks；实际运行顺序需由独立 execution ledger 证明，并单独检查 order/carryover
+    effect。
+11. SLO、停止条件和 regression threshold 必须在运行前冻结，不能根据结果曲线
+    事后选择。
+12. 性能结论必须先通过 correctness gate；collector error、counter reset、缺失
+    sidecar 或重复 repetition 都视为证据失败，不能静默跳过。
+
+第 9 条已在 runner/resume 和默认 normalizer/aggregator/telemetry/SLO consumer path
+强制；历史重建只能显式使用 `--allow-legacy-unmanifested` 并保留 evidence status，
+不能把该 bypass 用于新实验验收。SLO/plan identity 与 actual container attestation
+已经实现。collector validator 已检查 metrics endpoints、关键指标族和不超过 5 秒的
+相邻 sample gap，并检查 GPU 整体 span；GPU 仍没有 max-gap 或逐端点 window
+alignment。不能仅凭 manifest 存在就认为稳态窗口证据完整。
 
 ## 3. 指标与系统映射
 
@@ -43,6 +62,11 @@
 | E2E | 用户观察到的总延迟 | Queue + Prefill + Decode |
 | Output tok/s | 有效生成吞吐 | GPU 利用率、batch size |
 | Request queue time | 请求进入到开始执行的等待 | 饱和、HOL blocking |
+| Scheduled / actual sent rate | load generator 是否真正施加了计划负载 | client lag、concurrency cap |
+| Steady completed rate | 同一稳态窗口内完成的请求率 | 服务跟随 offered load 的能力 |
+| SLO goodput | 正确且同时满足 TTFT/E2E SLO 的请求率 | 可用服务容量 |
+| Queue slope / end backlog | backlog 是否随时间持续增长 | 稳态与过载判定 |
+| Drain time | 停止到达后清空 backlog 的时间 | 有限批次隐藏的欠账 |
 | KV Cache usage | 可并发 sequence 的内存约束 | 显存容量、调度、preemption |
 | GPU util / memory / clocks | GPU 活跃度与资源状态 | GPU 饱和、降频、共享干扰 |
 | CPU / RSS / cgroup | Host 侧资源消耗 | HTTP、tokenizer、scheduler |
@@ -53,6 +77,10 @@
 E2E ~= queue_time + TTFT_work + (output_tokens - 1) * TPOT
 Little's Law: concurrency ~= arrival_rate * average_latency
 ```
+
+Little's Law 检查只使用对齐的 steady measurement window：以 server 采样得到的
+`mean(running + waiting)` 对比同一窗口的 `completed_rate * mean(E2E)`。它用于发现
+窗口、单位或采样错误，不单独决定容量。
 
 ## 4. 分阶段执行计划
 
@@ -104,7 +132,7 @@ Docker stats、server 和 load-generator 日志。
 
 ### 阶段 2：Prefill 与 Decode 负载分解
 
-状态：待执行；时间序列 metrics 采集器已完成并通过 smoke。
+状态：已完成；20 个正式 run 全部成功，时间序列 metrics 采集器和矩阵图已完成。
 
 问题：长 prompt 和长 output 分别影响哪类指标？
 
@@ -127,26 +155,84 @@ context 空间。
 - 若观察不符合预期，先检查 queue time、实际 token 长度和 batching，不能直接
   归因于 GPU。
 
-验收：能够用数据解释 TTFT 与 TPOT 的不同来源，并画出 workload matrix 对比图。
+验收：已用数据解释 TTFT 与 TPOT 的不同来源，并形成 workload matrix 对比图和
+`reports/prefill-decoder.md`。结论和限制见该报告。
 
 ### 阶段 3：open-loop 到达率与服务饱和
 
-问题：在更接近在线服务的到达模型下，最大可持续 request rate 是多少？
+问题：在更接近在线服务的到达模型下，容量压力从哪里开始；在预先声明的 SLO 下，
+哪个 rate 能在长时间到达窗口内保持稳态？
 
-方法：
+#### 阶段 3a：finite boundary scan
 
-1. 从阶段 1 的吞吐估算初始容量。
-2. 固定 input/output 和足够高的 max concurrency。
-3. 使用有限 `request-rate`，按低、中、高负载逐级增加。
-4. 每档持续足够请求数，使 queue 能稳定出现或消失。
+状态：已完成。35 个正式 run、8,960 个请求全部成功；结果见
+[`reports/open-loop.md`](../reports/open-loop.md)。
 
-必须观察：request throughput、P99 TTFT/E2E、waiting requests、queue time、
-GPU util 和请求失败率。
+固定 input/output=512/128、256 requests、8 warmups、max concurrency=256，扫描
+4/6/8/10/12/14/16 req/s，每档重复 5 次。该扫描确认 12–14 req/s 是需要进一步
+验证的 transition band：14 req/s 开始出现 near-full KV Cache、capacity waiting
+和 preemption，16 req/s 是明显过载点。
 
-停止条件：连续两档出现 queue 持续增长、P99 发散或失败时，不再盲目加压。
+阶段 3a 的目标是缩小边界，不是证明长期容量。它使用有限 request batch，停止
+到达后 queue 可以 drain；`completed throughput / configured rate` 也只是包含 drain
+影响的有限批次诊断比值，不是请求完成率。**不能把 12 req/s 写成已经验证的长期
+sustainable rate。**
 
-验收：区分“最大短时 burst throughput”和“最大可持续吞吐”，并用
-Little's Law 检查 concurrency、arrival rate、latency 是否数量级一致。
+验收：已区分 low-load tracking、12–14 req/s transition band 和 rate-16 overload，
+并保存 raw JSON、metrics time series、GPU telemetry、Docker stats 与日志。
+
+#### 阶段 3b：long-window validation toward steady state
+
+状态：待运行；配置和 deterministic plan/runner 已实现，执行需要 GPU 空闲。
+
+固定 Phase 3a 的 server 和 512/128 workload，只验证 12/13/14 req/s。当前 runner
+按 `num_prompts = rate * 300 seconds` 构造 nominal 300-second arrival horizon，并从
+raw `start_times` 报告 realized arrival span；它不是 wall-clock 精确截止的固定窗口。
+五个 repetition/block 使用五个不同 load-generator seed，同一 block 的三个 rate
+共用 seed，planned rate order 由固定 plan seed 确定并持久化。当前
+`MAX_CONCURRENCY=1024`，用于降低 client semaphore 隐藏 server backlog 的风险；仍需
+用 schedule-lag/cap-reach 指标验证。warmup 不计入正式请求，有限 arrival sequence
+结束后继续采集到所有请求完成。
+
+必须同时采集：
+
+- scheduled rate、actual sent rate、schedule lag 和 client-cap reach；
+- steady-window completed rate、post-window completions 和 drain time；
+- P99 TTFT/E2E/TPOT、预先声明 SLO 下的 goodput 和 bootstrap confidence interval；
+- waiting/running time series、queue slope、end backlog、queue counter delta；
+- KV Cache P95/max、preemption、GPU/host 资源、失败和 collector errors。
+
+当前 runner、paired plan、manifest/evidence validator、realized send/approximate
+drain、queue/KV/preemption telemetry 汇总、SLO/plan identity 绑定和 actual container
+attestation 已实现。TTFT/E2E SLO 在 checked-in config 中故意留空，runner 会拒绝
+正式执行。选定后，planner 把阈值、namespace、workload 条件与 planned order 写入
+plan；runner 再把 namespace/attempt、plan row/path/hash 和 SLO 写入 manifest/raw
+metadata，并由 validator 重新校验。telemetry aggregate 已优先用 metrics-before/after
+计算 benchmark-envelope counter delta；该窗口包含 warmup、formal requests 与 drain。
+
+正式验收的剩余 gates 是：严格 fixed-wall-clock loadgen 与 schedule-lag/client
+cap-reach；arrival-window 对齐的 queue slope/end backlog 和 completion 切分；正式
+窗口 counter delta；accepted-attempt 映射与 actual execution ledger；P99 bootstrap
+CI 与同窗口 Little's Law。当前 300 秒仍只是 prompt count 推导的 nominal expected
+horizon；queue maximum 和 benchmark-envelope counter delta 都不能替代上述指标。
+当前实现应称 long-window finite validation。
+
+validator 目前验证 metrics endpoints 包住 first arrival/last completion、关键指标族
+齐全且相邻 sampling gap 不超过 5 秒，并要求 GPU CSV 的递增 timestamp span 不短于
+raw duration；GPU 尚无 max-gap，也未将两端逐点对齐 arrival/completion。这些窗口
+证据补齐前，不把 runner 的一次成功退出等同于完整稳态验收。
+
+Telemetry/SLO analyzers 和 open-loop aggregate 已默认绑定并重验 complete manifest，
+输出会传播 evidence status；历史 bypass 必须显式开启。跨所有 phase 的统一 evidence
+index 仍属于发布层改进，但不再是这些 consumers 的 fail-closed 缺口。
+
+容量验收必须同时满足：actual sent 跟上计划、steady completed 跟上 actual sent、
+queue 不持续正增长、tails 跨重复稳定且满足预先声明 SLO、无失败/preemption，且
+Little's Law 在同一窗口内数量级一致。任一条件不满足，该 rate 只能标为 transition
+或 overload，不能标为 sustainable。
+
+停止条件：连续配置出现持续 queue 增长、P99 发散、失败或 preemption 时，停止向
+更高 rate 扩展，先完成 evidence validation 和 RCA。
 
 ### 阶段 4：KV Cache 与 scheduler 压力
 
@@ -236,7 +322,13 @@ scheduler、内存回收和 GPU 执行等待。
 | Cost | 显存、吞吐、长请求或稳定性代价 |
 | Regression | 其他 workload 是否退化 |
 
-验收：至少完成两项优化，其中一项必须包含明确副作用，避免把参数调优写成无条件收益。
+每次 A/B 在性能比较前先通过 correctness gate：completed/failed、HTTP/stream 解析、
+实际 token 长度、model/tokenizer/非目标参数一致、collector 完整性和抽样
+prompt/response hash 均符合预先定义的规则。性能 gate 同时检查 baseline、压力场景
+和一个非目标 workload，并报告 SLO goodput、queue/KV/preemption 与资源代价。
+
+验收：至少完成两项优化，其中一项必须包含明确副作用；报告 point estimate、重复间
+spread/CI、正确性与回归结果，避免把参数调优写成无条件收益。
 
 ### 阶段 9：可迁移性验证与最终交付
 
@@ -256,6 +348,9 @@ scheduler、内存回收和 GPU 执行等待。
 - 5 分钟与 20 分钟面试讲稿；
 - 两条只使用已验证数字的简历 bullet；
 - 已知限制和下一步。
+- `results/manifests/` run index 与 checksum；
+- 可下载的 full raw/telemetry/log evidence bundle，或明确说明哪些证据仅本地保存；
+- 无 GPU CI：fixtures、validator、aggregation regression、Python/shell checks。
 
 ## 5. 执行顺序与阶段门
 
@@ -263,7 +358,8 @@ scheduler、内存回收和 GPU 执行等待。
 阶段 0 完成
   -> 阶段 1 正式 baseline
   -> 阶段 2 Prefill/Decode
-  -> 阶段 3 open-loop 饱和
+  -> 阶段 3a finite boundary scan
+  -> 阶段 3b long-window / steady-state validation
   -> 阶段 4 KV Cache
   -> 阶段 5 混合负载 RCA
   -> 阶段 6 Host 资源 RCA
@@ -285,7 +381,7 @@ Decoding 或自定义 CUDA kernel。它们不会替代当前单卡实验方法�
 
 ### 第二个两周
 
-- 完成 open-loop 饱和、KV Cache 压力、混合负载 RCA；
+- 完成 Phase 3b 稳态验收、KV Cache 压力、混合负载 RCA；
 - 交付一份完整 RCA 和一项优化复验；
 - 能解释 queue、batching、KV Cache 与 P99 的因果链。
 
