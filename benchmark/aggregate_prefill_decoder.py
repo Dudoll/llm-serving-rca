@@ -15,10 +15,17 @@ concurrency fixed at 8, so there are no c1/previous-concurrency gain fields.
 
 from __future__ import annotations
 
+import argparse
 import csv
+import math
 import statistics
 from collections import defaultdict
 from pathlib import Path
+
+try:
+    from benchmark.summarize_results import validate_summary_evidence_rows
+except ModuleNotFoundError:  # pragma: no cover - direct script execution path.
+    from summarize_results import validate_summary_evidence_rows  # type: ignore[no-redef]
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -54,29 +61,90 @@ METRICS = (
 
 
 def values(rows: list[dict[str, str]], key: str) -> list[float]:
-    """Return non-empty values for one metric as floats."""
-    return [float(row[key]) for row in rows if row.get(key, "") != ""]
+    """Return one required finite, non-negative value per repetition."""
+    if not all(row.get(key, "") != "" for row in rows):
+        raise ValueError(f"Metric {key!r} is missing from part of a workload group")
+    parsed = [float(row[key]) for row in rows]
+    if any(not math.isfinite(value) or value < 0 for value in parsed):
+        raise ValueError(f"Metric {key!r} must be finite and non-negative")
+    return parsed
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", type=Path, default=SUMMARY_FILE)
+    parser.add_argument("--output", type=Path, default=OUTPUT_FILE)
+    parser.add_argument(
+        "--expected-repetitions",
+        type=int,
+        default=5,
+        help="Required unique repetitions per workload (default: 5)",
+    )
+    parser.add_argument(
+        "--allow-legacy-unmanifested",
+        action="store_true",
+        help="Explicitly aggregate historical summary rows without manifests",
+    )
+    return parser.parse_args()
 
 
 def main() -> int:
-    with SUMMARY_FILE.open(newline="", encoding="utf-8") as input_file:
+    args = parse_args()
+    if args.expected_repetitions <= 0:
+        raise ValueError("--expected-repetitions must be positive")
+    with args.input.open(newline="", encoding="utf-8") as input_file:
         source_rows = list(csv.DictReader(input_file))
+    validate_summary_evidence_rows(
+        source_rows,
+        allow_legacy_unmanifested=args.allow_legacy_unmanifested,
+    )
 
-    grouped: dict[tuple[int, int, int], list[dict[str, str]]] = defaultdict(list)
+    grouped: dict[tuple[str, str, int, int, int, int], list[dict[str, str]]] = (
+        defaultdict(list)
+    )
     for row in source_rows:
         key = (
+            row["experiment_spec_sha256"],
+            row["phase"],
             int(row["input_len"]),
             int(row["output_len"]),
             int(row["concurrency"]),
+            int(row["num_prompts"]),
         )
         grouped[key].append(row)
 
     aggregate_rows: list[dict[str, str | int | float]] = []
-    for (input_len, output_len, concurrency), rows in sorted(grouped.items()):
+    for (
+        experiment_spec,
+        phase,
+        input_len,
+        output_len,
+        concurrency,
+        num_prompts,
+    ), rows in sorted(grouped.items()):
+        repetitions = [int(row["repetition"]) for row in rows]
+        if set(repetitions) != set(range(1, args.expected_repetitions + 1)):
+            raise ValueError(
+                f"Workload {(phase, input_len, output_len, concurrency)} has "
+                f"repetitions {sorted(repetitions)}"
+            )
+        if len(repetitions) != len(set(repetitions)):
+            raise ValueError("Prefill/decode workload has duplicate repetitions")
+        if any(int(row["failed"]) != 0 for row in rows):
+            raise ValueError(
+                "Failed requests cannot enter the prefill/decode aggregate"
+            )
+        statuses = {row["evidence_status"] for row in rows}
+        if len(statuses) != 1:
+            raise ValueError("A prefill/decode group cannot mix evidence provenance")
         aggregate_row: dict[str, str | int | float] = {
+            "evidence_status": rows[0]["evidence_status"],
+            "experiment_spec_sha256": experiment_spec,
+            "phase": phase,
             "input_len": input_len,
             "output_len": output_len,
             "concurrency": concurrency,
+            "num_prompts": num_prompts,
             "repetitions": len(rows),
             "completed_total": sum(int(row["completed"]) for row in rows),
             "failed_total": sum(int(row["failed"]) for row in rows),
@@ -98,22 +166,26 @@ def main() -> int:
         for suffix in ("median", "min", "max")
     ]
     fieldnames = [
+        "evidence_status",
+        "experiment_spec_sha256",
+        "phase",
         "input_len",
         "output_len",
         "concurrency",
+        "num_prompts",
         "repetitions",
         "completed_total",
         "failed_total",
         *metric_columns,
     ]
 
-    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_FILE.open("w", newline="", encoding="utf-8") as output_file:
-        writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with args.output.open("w", newline="", encoding="utf-8") as output_file:
+        writer = csv.DictWriter(output_file, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(aggregate_rows)
 
-    print(f"Wrote {len(aggregate_rows)} rows to {OUTPUT_FILE}")
+    print(f"Wrote {len(aggregate_rows)} rows to {args.output}")
     for row in aggregate_rows:
         print(
             f"in={row['input_len']} out={row['output_len']} "
