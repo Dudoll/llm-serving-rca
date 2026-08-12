@@ -44,7 +44,7 @@ docker run --detach --rm \
     --name "${CONTAINER_NAME}" \
     --gpus all \
     --ipc=host \
-    --publish "${SERVER_PORT}:8000" \
+    --publish "${SERVER_PORT}:${CONTAINER_SERVER_PORT}" \
     --volume "${HF_CACHE_DIR}:/root/.cache/huggingface" \
     --volume "${VLLM_COMPILE_VOLUME}:/root/.cache/vllm" \
     --volume "${PROJECT_ROOT}:/workspace" \
@@ -53,6 +53,7 @@ docker run --detach --rm \
     --env NO_PROXY=127.0.0.1,localhost \
     "${VLLM_IMAGE}" \
     "${MODEL}" \
+    --port "${CONTAINER_SERVER_PORT}" \
     --revision "${MODEL_REVISION}" \
     --max-model-len "${MAX_MODEL_LEN}" \
     --gpu-memory-utilization "${GPU_MEMORY_UTILIZATION}" \
