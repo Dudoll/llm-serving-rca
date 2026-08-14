@@ -16,6 +16,7 @@ from decimal import Decimal
 from pathlib import Path
 
 if __package__:
+    from .accepted_attempts import load_accepted_run_ids
     from .evidence_manifest import load_manifest
     from .summarize_results import (
         MANIFEST_DIR,
@@ -27,6 +28,7 @@ if __package__:
         validate_result,
     )
 else:  # Support ``python3 benchmark/analyze_slo.py`` from the repository root.
+    from accepted_attempts import load_accepted_run_ids  # type: ignore[no-redef]
     from evidence_manifest import load_manifest  # type: ignore[no-redef]
     from summarize_results import (  # type: ignore[no-redef]
         MANIFEST_DIR,
@@ -174,6 +176,11 @@ def parse_args() -> argparse.Namespace:
         description="Calculate request-level lab SLO goodput"
     )
     parser.add_argument("--pattern", required=True, help="Glob under results/raw/")
+    parser.add_argument(
+        "--accepted-attempts",
+        type=Path,
+        help="TSV ledger selecting one complete attempt for each logical plan row",
+    )
     parser.add_argument("--output", type=Path, default=SUMMARY_DIR / "slo-summary.csv")
     parser.add_argument("--ttft-slo-ms", type=positive_finite, required=True)
     parser.add_argument("--e2e-slo-ms", type=positive_finite, required=True)
@@ -188,10 +195,25 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    paths = sorted(RAW_DIR.glob(args.pattern))
+    if args.accepted_attempts:
+        if args.allow_legacy_unmanifested:
+            raise ValueError(
+                "--accepted-attempts cannot be combined with legacy admission"
+            )
+        run_ids = load_accepted_run_ids(
+            args.accepted_attempts, project_root=PROJECT_ROOT
+        )
+        paths = [RAW_DIR / f"{run_id}.json" for run_id in run_ids]
+    else:
+        paths = sorted(RAW_DIR.glob(args.pattern))
     if not paths:
         raise ValueError(
             f"No raw result files matched {args.pattern!r} under {RAW_DIR}"
+        )
+    missing_paths = [str(path) for path in paths if not path.is_file()]
+    if missing_paths:
+        raise ValueError(
+            "Accepted raw result files are missing: " + ", ".join(missing_paths)
         )
     rows = []
     for path in paths:

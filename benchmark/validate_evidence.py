@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
-"""Validate a benchmark evidence bundle before it is considered complete."""
+"""Validate a benchmark evidence bundle before it is considered complete.
+
+The validator is deliberately fail-closed. It is easiest to read from the
+bottom up: ``validate_evidence_bundle`` is the public orchestration function;
+the helpers above it validate one layer at a time (raw result, metrics stream,
+GPU CSV, artifact hashes, manifest/workload binding, then collector exits).
+"""
 
 from __future__ import annotations
 
@@ -111,6 +117,13 @@ REQUIRED_GPU_COLUMNS = {
 }
 GPU_COLUMNS_ALLOWING_NA = {"power.draw [W]"}
 
+# vLLM's RandomDataset targets a token length, then decodes and re-encodes the
+# generated token IDs. Tokenizer non-bijectivity can leave a tiny residual
+# mismatch after its bounded retry loop. Keep that known generator behavior
+# bounded at both the individual-request and whole-run levels.
+FIXED_INPUT_MAX_REQUEST_DRIFT_RATIO = 0.01
+FIXED_INPUT_MAX_TOTAL_ABS_DRIFT_RATIO = 0.0001
+
 
 def _as_decimal(value: object) -> Decimal | None:
     if isinstance(value, bool) or value is None:
@@ -173,10 +186,33 @@ def _validate_detailed_values(
     if _values_equal(expected.get("random_range_ratio"), 0):
         expected_input_len = int(expected["input_len"])
         expected_output_len = int(expected["output_len"])
-        if any(value != expected_input_len for value in payload["input_lens"]):
+        input_drifts = [
+            value - expected_input_len for value in payload["input_lens"]
+        ]
+        max_request_drift = max(abs(drift) for drift in input_drifts)
+        total_abs_drift = sum(abs(drift) for drift in input_drifts)
+        max_request_drift_allowed = max(
+            1, math.floor(expected_input_len * FIXED_INPUT_MAX_REQUEST_DRIFT_RATIO)
+        )
+        total_abs_drift_allowed = max(
+            1,
+            math.floor(
+                expected_input_len
+                * len(input_drifts)
+                * FIXED_INPUT_MAX_TOTAL_ABS_DRIFT_RATIO
+            ),
+        )
+        if max_request_drift > max_request_drift_allowed:
             raise EvidenceValidationError(
-                "raw input_lens do not match fixed-length workload "
-                f"input_len={expected_input_len}"
+                "raw input_lens exceed bounded fixed-workload per-request drift: "
+                f"target={expected_input_len}, observed_max_abs_drift="
+                f"{max_request_drift}, allowed={max_request_drift_allowed}"
+            )
+        if total_abs_drift > total_abs_drift_allowed:
+            raise EvidenceValidationError(
+                "raw input_lens exceed bounded fixed-workload aggregate drift: "
+                f"target={expected_input_len}, observed_total_abs_drift="
+                f"{total_abs_drift}, allowed={total_abs_drift_allowed}"
             )
         if any(value != expected_output_len for value in payload["output_lens"]):
             raise EvidenceValidationError(

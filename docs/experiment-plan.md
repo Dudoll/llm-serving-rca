@@ -181,18 +181,23 @@ sustainable rate。**
 验收：已区分 low-load tracking、12–14 req/s transition band 和 rate-16 overload，
 并保存 raw JSON、metrics time series、GPU telemetry、Docker stats 与日志。
 
-#### 阶段 3b：long-window validation toward steady state
+#### Phase 3b: long-window validation toward steady state
 
-状态：待运行；配置和 deterministic plan/runner 已实现，执行需要 GPU 空闲。
+Status: completed as long-window finite validation, with the final steady-state
+capacity gate still open. The 15 accepted bundles contain 58,500 successful
+requests and use the complete manifest-bound analysis pipeline. The report is
+[`reports/open-loop-steady.md`](../reports/open-loop-steady.md).
 
-固定 Phase 3a 的 server 和 512/128 workload，只验证 12/13/14 req/s。当前 runner
-按 `num_prompts = rate * 300 seconds` 构造 nominal 300-second arrival horizon，并从
-raw `start_times` 报告 realized arrival span；它不是 wall-clock 精确截止的固定窗口。
-五个 repetition/block 使用五个不同 load-generator seed，同一 block 的三个 rate
-共用 seed，planned rate order 由固定 plan seed 确定并持久化。当前
-`MAX_CONCURRENCY=1024`，用于降低 client semaphore 隐藏 server backlog 的风险；仍需
-用 schedule-lag/cap-reach 指标验证。warmup 不计入正式请求，有限 arrival sequence
-结束后继续采集到所有请求完成。
+Phase 3b keeps the Phase 3a server and 512/128 workload and tests 12/13/14
+req/s. The runner constructs a nominal 300-second arrival horizon using
+`num_prompts = rate * 300 seconds` and reports the realized arrival span from
+raw `start_times`; it is not a wall-clock-exact fixed window. Five
+repetition/blocks use five different load-generator seeds, with the same seed
+shared across the three rates in each block. The planned rate order is fixed
+and persisted. `MAX_CONCURRENCY=1024` reduces the risk that a client semaphore
+hides server backlog, but schedule-lag and cap-reach evidence is still needed.
+Warmup is excluded from formal requests, and the finite arrival sequence is
+followed by collection until all requests complete.
 
 必须同时采集：
 
@@ -202,20 +207,23 @@ raw `start_times` 报告 realized arrival span；它不是 wall-clock 精确截�
 - waiting/running time series、queue slope、end backlog、queue counter delta；
 - KV Cache P95/max、preemption、GPU/host 资源、失败和 collector errors。
 
-当前 runner、paired plan、manifest/evidence validator、realized send/approximate
-drain、queue/KV/preemption telemetry 汇总、SLO/plan identity 绑定和 actual container
-attestation 已实现。TTFT/E2E SLO 在 checked-in config 中故意留空，runner 会拒绝
-正式执行。选定后，planner 把阈值、namespace、workload 条件与 planned order 写入
-plan；runner 再把 namespace/attempt、plan row/path/hash 和 SLO 写入 manifest/raw
-metadata，并由 validator 重新校验。telemetry aggregate 已优先用 metrics-before/after
-计算 benchmark-envelope counter delta；该窗口包含 warmup、formal requests 与 drain。
+The runner, paired plan, manifest/evidence validator, realized-send and
+approximate-drain metrics, SLO/plan identity binding, actual-container
+attestation and accepted-attempt ledger are implemented. The checked-in TTFT
+and E2E SLOs are 200/4,000 ms. The planner records thresholds, namespace,
+workload conditions and planned order; the runner records namespace/attempt,
+plan row/path/hash and SLO metadata in the manifest/raw bundle; and the
+validator rechecks those bindings. The telemetry aggregate currently uses
+metrics-before/after snapshots for a benchmark-envelope counter delta that
+includes warmup, formal arrivals and drain.
 
-正式验收的剩余 gates 是：严格 fixed-wall-clock loadgen 与 schedule-lag/client
-cap-reach；arrival-window 对齐的 queue slope/end backlog 和 completion 切分；正式
-窗口 counter delta；accepted-attempt 映射与 actual execution ledger；P99 bootstrap
-CI 与同窗口 Little's Law。当前 300 秒仍只是 prompt count 推导的 nominal expected
-horizon；queue maximum 和 benchmark-envelope counter delta 都不能替代上述指标。
-当前实现应称 long-window finite validation。
+The remaining conclusion gates are strict fixed-wall-clock load generation with
+schedule-lag/client-cap reach, arrival-window-aligned queue slope/end backlog
+and completion partitioning, arrival-window counter deltas, P99 bootstrap
+confidence intervals and same-window Little's Law. The 300 seconds remains a
+prompt-count-derived nominal horizon; queue maxima and benchmark-envelope
+counter deltas cannot replace these measurements. Until they are implemented,
+the result must be called long-window finite validation.
 
 validator 目前验证 metrics endpoints 包住 first arrival/last completion、关键指标族
 齐全且相邻 sampling gap 不超过 5 秒，并要求 GPU CSV 的递增 timestamp span 不短于

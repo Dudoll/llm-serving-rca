@@ -54,6 +54,20 @@ def summarize_file(path: Path) -> dict[str, Any]:
     ):
         row[key] = result_value(result, metadata, key, row.get(key, ""))
 
+    input_lens = result["input_lens"]
+    configured_input_len = int(row["input_len"])
+    input_drifts = [value - configured_input_len for value in input_lens]
+    row["actual_input_len_min"] = min(input_lens)
+    row["actual_input_len_max"] = max(input_lens)
+    row["actual_input_len_mean"] = sum(input_lens) / len(input_lens)
+    row["input_token_abs_drift_total"] = sum(abs(value) for value in input_drifts)
+    row["input_token_net_drift_total"] = sum(input_drifts)
+    row["input_token_abs_drift_pct"] = (
+        row["input_token_abs_drift_total"]
+        / (configured_input_len * len(input_lens))
+        * 100.0
+    )
+
     request_rate = finite_request_rate(row["request_rate"])
     start_times = result["start_times"]
     if request_rate is not None and len(start_times) >= 2:

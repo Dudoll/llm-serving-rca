@@ -3,6 +3,10 @@
 This module deliberately knows nothing about manifests or CSV files.  It only
 answers one question: is a raw benchmark JSON internally coherent enough to be
 normalised?
+
+Read this file in this order: constants at the top define the result schema,
+``finite_nonnegative`` defines the numeric rule, and ``validate_result`` is the
+single public gate used before derived metrics are calculated.
 """
 
 from __future__ import annotations
@@ -38,6 +42,12 @@ BASE_FIELDS = [
     "input_throughput",
     "output_throughput",
     "total_token_throughput",
+    "actual_input_len_min",
+    "actual_input_len_max",
+    "actual_input_len_mean",
+    "input_token_abs_drift_total",
+    "input_token_net_drift_total",
+    "input_token_abs_drift_pct",
     "arrival_span_s",
     "realized_send_rate",
     "drain_time_approx_s",

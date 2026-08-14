@@ -65,6 +65,11 @@ CORE_METRICS = (
 
 OPTIONAL_METRICS = (
     "request_goodput",
+    "actual_input_len_min",
+    "actual_input_len_max",
+    "actual_input_len_mean",
+    "input_token_abs_drift_total",
+    "input_token_abs_drift_pct",
     "arrival_span_s",
     "realized_send_rate",
     "drain_time_approx_s",

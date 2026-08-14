@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Any, Mapping
 
 from .evidence_manifest import load_manifest
 from .experiment_identity import legacy_identity_fields, manifest_identity_fields

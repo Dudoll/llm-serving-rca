@@ -96,6 +96,16 @@ fi
 plan_sha256="$(sha256sum "${PLAN_FILE}")"
 plan_sha256="${plan_sha256%% *}"
 
+ACCEPTED_ATTEMPTS_RELATIVE_PATH="results/plans/${RUN_NAMESPACE}-accepted-attempts.tsv"
+ACCEPTED_ATTEMPTS_FILE="${PROJECT_ROOT}/${ACCEPTED_ATTEMPTS_RELATIVE_PATH}"
+write_accepted_attempt_ledger() {
+    python3 "${PROJECT_ROOT}/benchmark/accepted_attempts.py" \
+        --plan "${PLAN_FILE}" \
+        --manifest-dir "${PROJECT_ROOT}/results/manifests" \
+        --output "${ACCEPTED_ATTEMPTS_FILE}" \
+        --allow-incomplete
+}
+
 # Validate and persist the complete ExperimentSpec before touching the runtime.
 if ! container_running; then
     echo "Container ${CONTAINER_NAME} is not running." >&2
@@ -132,7 +142,7 @@ while IFS=$'\t' read -r \
         exit 1
     fi
     echo "Steady block ${block}, order ${order_in_block}: rate=${request_rate}, seed=${loadgen_seed}, prompts=${num_prompts}, nominal_window=${arrival_window_seconds}s"
-    RUN_ID="open_loop_steady-${RUN_NAMESPACE}-in${INPUT_LEN}-out${OUTPUT_LEN}-l${request_rate}-s${loadgen_seed}-b${block}-a${RUN_ATTEMPT}" \
+    if RUN_ID="open_loop_steady-${RUN_NAMESPACE}-in${INPUT_LEN}-out${OUTPUT_LEN}-l${request_rate}-s${loadgen_seed}-b${block}-a${RUN_ATTEMPT}" \
     PHASE=open_loop_steady \
     RUN_NAMESPACE="${RUN_NAMESPACE}" \
     RUN_ATTEMPT="${RUN_ATTEMPT}" \
@@ -155,12 +165,23 @@ while IFS=$'\t' read -r \
     LOADGEN_SEED="${loadgen_seed}" \
     RANDOM_RANGE_RATIO="${RANDOM_RANGE_RATIO}" \
     BETWEEN_RUN_SECONDS="${BETWEEN_RUN_SECONDS}" \
-        "${SCRIPT_DIR}/run_one_bench.sh"
+        "${SCRIPT_DIR}/run_one_bench.sh"; then
+        :
+    else
+        run_status=$?
+        if ! write_accepted_attempt_ledger; then
+            echo "Failed to refresh accepted-attempt ledger after run failure." >&2
+        fi
+        exit "${run_status}"
+    fi
 done <"${PLAN_FILE}"
+
+write_accepted_attempt_ledger
 
 echo "Steady open-loop runs completed."
 echo "Raw results: ${PROJECT_ROOT}/results/raw"
 echo "Telemetry: ${PROJECT_ROOT}/results/telemetry"
 echo "Execution plan: ${PLAN_FILE}"
+echo "Accepted attempts: ${ACCEPTED_ATTEMPTS_FILE}"
 echo "Retry one failed cell with a new immutable ID using, for example:"
 echo "RUN_ATTEMPT_OVERRIDE=2 ONLY_BLOCK_OVERRIDE=3 ONLY_RATE_OVERRIDE=13 $0"

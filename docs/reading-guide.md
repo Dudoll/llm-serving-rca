@@ -75,6 +75,39 @@ artifact churn、attempt、block 和 order 等运行级变化。聚合和 gain �
 
 ## 运行和检查顺序
 
+如果只是想按完整流程处理一个 phase，可以使用统一入口：
+
+```bash
+python3 benchmark/analyze_phase.py phase1 --legacy
+python3 benchmark/analyze_phase.py phase2 --legacy
+python3 benchmark/analyze_phase.py phase3a --legacy --plot
+```
+
+`--legacy` 只适用于没有 schema-v1 manifest 的历史 raw；新 run 不要加它。Phase 3b v1
+已经将 SLO 冻结为 TTFT=200 ms、E2E=4,000 ms，执行离线分析：
+
+```bash
+python3 benchmark/analyze_phase.py phase3b \
+  --ttft-slo-ms 200 \
+  --e2e-slo-ms 4000 \
+  --plot
+```
+
+这个入口只是把下面几个独立阶段串起来，不隐藏它们的输入/输出：
+
+```text
+summarize_results.py
+    -> results/summary/<phase>-summary.csv
+aggregate_*.py
+    -> results/summary/<phase>-aggregate.csv
+aggregate_telemetry.py (open-loop only)
+    -> results/summary/<phase>-telemetry-summary.csv
+plot_*.py (optional)
+    -> charts/
+```
+
+学习代码时，建议先单独运行每一步；熟悉之后再使用 `analyze_phase.py`。
+
 先看单次运行：
 
 ```bash
@@ -91,7 +124,11 @@ python3 benchmark/analyze_slo.py --help
 python3 -m unittest discover -s tests
 ```
 
-当前设计的边界不是“所有 Phase 3b 结论已经完成”：fixed wall-clock arrival、
-steady-window queue slope/end backlog、window-aligned counter delta、P99 CI 和
-accepted-attempt ledger 仍是后续 gate。代码通过这些边界前，不应把 finite scan 写成
-长期可持续容量。
+Phase 3b v1 默认从 `results/plans/phase3b-v1-accepted-attempts.tsv` 读取每个 logical
+cell 唯一接受的 complete attempt；runner 每次结束都会重建该 ledger，failed attempt
+仍原样保留用于 RCA。Phase 3b v1 的结果见
+[`reports/open-loop-steady.md`](../reports/open-loop-steady.md)。当前设计的剩余边界是
+fixed wall-clock arrival、schedule-lag/client-cap reach、steady-window queue
+slope/end backlog、window-aligned counter delta、P99 confidence intervals 和
+Little's Law。代码通过这些边界前，不应把 long-window finite validation 写成长期
+可持续容量。

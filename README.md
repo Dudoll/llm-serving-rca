@@ -9,7 +9,7 @@
 
 ## 项目快照
 
-当前 checkout 中已有报告记录了 **85 个正式 run、14,080 个成功请求、0 个失败
+当前 checkout 中已有报告记录了 **100 个 accepted run、72,580 个成功请求、0 个失败
 请求**：
 
 | 实验 | 正式 run | 请求 | 已验证结论 |
@@ -17,21 +17,25 @@
 | Closed-loop baseline | 30 | 3,840 | c16 是 latency/throughput 候选 knee；c32 仍有吞吐收益，不能称为饱和点 |
 | Prefill/Decode matrix | 20 | 1,280 | 长输入主要放大 TTFT/排队，长输出主要放大 E2E |
 | Phase 3a finite boundary scan | 35 | 8,960 | 12–14 req/s 之间出现容量压力转折；14–16 req/s 出现 KV/cache-scheduler 压力证据 |
+| Phase 3b long-window finite validation | 15 | 58,500 | 12/13/14 req/s completed with 200/4,000 ms SLO evidence; no tested rate passes the final sustainable-capacity gate |
 
 数字来源分别见 [`baseline.md`](reports/baseline.md)、
-[`prefill-decoder.md`](reports/prefill-decoder.md) 和
-[`open-loop.md`](reports/open-loop.md)。Phase 3a 使用有限 256-request 批次；
-**12 req/s 只是 Phase 3b 的上边界候选点，不是已经证明的长期 sustainable
-capacity**。
+[`prefill-decoder.md`](reports/prefill-decoder.md)、
+[`open-loop.md`](reports/open-loop.md) 和
+[`open-loop-steady.md`](reports/open-loop-steady.md)。Phase 3a 使用有限
+256-request 批次；Phase 3b 使用 nominal 300-second arrivals。当前证据表明在
+200/4,000 ms SLO 下，12 req/s 仍不是通过稳态门的 sustainable capacity。
 
-这 85 个 run 是已有报告的历史总数，不是“85 个 complete manifest”。当前
+这 100 个 accepted run 是当前正式证据总数，不等于“100 个 complete manifest”：
+Phase 3b v1 的 15 个 run 是 accepted complete bundles，而早期报告中的历史
+baseline/Prefill-Decode runs 仍可能是 legacy evidence。当前
 normalizer、各 aggregate path、telemetry 与 SLO consumer 默认只接受并重新验证
 complete manifest；重建尚未 backfill 的历史结果必须显式使用
 `--allow-legacy-unmanifested`，per-run summary 会保留
 `evidence_status=legacy-unmanifested`。
 
-当前状态：Phase 0/1/2 与 **Phase 3a 已完成**；Phase 3b 将在 12/13/14 req/s
-附近进行 nominal 5-minute long-window validation。统一状态入口见
+当前状态：Phase 0/1/2/3a 已完成，Phase 3b v1 已完成 long-window finite validation；
+最终 steady-state capacity gate 仍未通过。下一轮建议测试 10/11/12 req/s。统一状态入口见
 [`docs/progress.md`](docs/progress.md)。
 
 ## 这个项目展示什么
@@ -145,23 +149,41 @@ python3 benchmark/aggregate_telemetry.py \
 ./.venv/bin/python benchmark/plot_open_loop.py
 ```
 
-Phase 3b 是下一轮需要占用 GPU 的实验；配置和 runner 分别是
+上面的分步命令适合学习每个 CSV 如何产生。熟悉流程后，可以用统一入口执行同样的
+离线 pipeline：
+
+```bash
+# 历史、没有 schema-v1 manifest 的 evidence
+python3 benchmark/analyze_phase.py phase1 --legacy
+python3 benchmark/analyze_phase.py phase2 --legacy
+python3 benchmark/analyze_phase.py phase3a --legacy --plot
+
+# 新 run 已有 complete manifest 时，去掉 --legacy
+python3 benchmark/analyze_phase.py phase3a --plot
+```
+
+入口只负责串联既有模块，不替代它们。每一步仍会打印实际执行的 Python 命令，并把
+中间 CSV 保存在 `results/summary/`，便于停下来检查。阶段映射和输入/输出约定见
+[`docs/reading-guide.md`](docs/reading-guide.md) 与
+[`benchmark/phase_pipeline.py`](benchmark/phase_pipeline.py)。
+
+Phase 3b v1 的配置和 runner 分别是
 `configs/open_loop_steady.env` 与 `scripts/run_open_loop_steady.sh`。当前固定
 12/13/14 req/s、`MAX_CONCURRENCY=1024`，并以 `rate * 300` 计算 prompt 数；300 秒
-只是 nominal expected horizon，不是严格 wall-clock 截止。TTFT/E2E SLO 字段故意
-留空，runner 会 fail closed，必须在首个正式 run 前选定阈值。设置后，SLO、namespace/
-workload 条件和 planned order 会落入 plan；runner 再把 namespace/attempt、plan
+只是 nominal expected horizon，不是严格 wall-clock 截止。TTFT/E2E SLO 已冻结为
+200/4000 ms，并写入 plan、manifest 和 raw metadata；runner 再把 namespace/attempt、plan
 row/path/hash 与 SLO 写入 manifest/raw metadata，并由 validator 重新绑定校验。runner
 的 planned permutation blocks 同时平衡位置和有向前序暴露；它还会核验并记录实际
 container image、命令参数、served model 和 vLLM version。plan 本身不证明 retry 后
 的实际 predecessor，仍需 accepted-attempt/execution ledger。
 
-尚未完成的 Phase 3b 结论门是：严格 fixed-wall-clock loadgen 与 schedule-lag/client
+Phase 3b v1 已完成 evidence-producing run，但尚未完成的结论门是：严格 fixed-wall-clock loadgen 与 schedule-lag/client
 cap-reach 证明、按 arrival window 对齐的 queue slope/end backlog 与 counter delta、
 跨重复 P99 CI 和同窗口 Little's Law。正式批量执行前还需补 accepted-attempt 映射，
 以及实际 execution ledger，让 immutable failed run 的 retry/resume 能被分析层无
 歧义选中并保留真实 predecessor。它们完成前仍只能称 long-window finite
-validation，不能发布长期 sustainable rate。
+validation，不能发布长期 sustainable rate。详细结果见
+[`reports/open-loop-steady.md`](reports/open-loop-steady.md)。
 
 不使用 GPU 的 evidence/analysis 回归检查：
 

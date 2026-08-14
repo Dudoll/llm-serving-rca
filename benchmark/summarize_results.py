@@ -23,10 +23,11 @@ from pathlib import Path
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from benchmark.accepted_attempts import load_accepted_run_ids
+
 try:  # Support both package imports and direct execution from the repo root.
     from benchmark.evidence_admission import (
         PROJECT_ROOT,
-        summary_values_equal,
         validate_complete_bundle_for_raw as _validate_complete_bundle_for_raw,
         validate_summary_evidence_rows as _validate_summary_evidence_rows,
     )
@@ -45,11 +46,10 @@ try:  # Support both package imports and direct execution from the repo root.
         result_value,
         validate_result,
     )
-    from benchmark.result_normalization import summarize_file
+    from benchmark.result_normalization import summarize_file, summary_values_equal
 except ModuleNotFoundError:  # pragma: no cover - direct script execution.
     from evidence_admission import (  # type: ignore[no-redef]
         PROJECT_ROOT,
-        summary_values_equal,
         validate_complete_bundle_for_raw as _validate_complete_bundle_for_raw,
         validate_summary_evidence_rows as _validate_summary_evidence_rows,
     )
@@ -68,13 +68,37 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution.
         result_value,
         validate_result,
     )
-    from result_normalization import summarize_file  # type: ignore[no-redef]
+    from result_normalization import (  # type: ignore[no-redef]
+        summarize_file,
+        summary_values_equal,
+    )
 
 
 RAW_DIR = PROJECT_ROOT / "results" / "raw"
 SUMMARY_DIR = PROJECT_ROOT / "results" / "summary"
 MANIFEST_DIR = PROJECT_ROOT / "results" / "manifests"
 
+# These names are intentionally re-exported for the existing analysis CLIs.
+# Keeping the compatibility surface explicit prevents future refactors from
+# accidentally deleting an import that is part of the repository API.
+__all__ = [
+    "BASE_FIELDS",
+    "FIELDS",
+    "MANIFEST_DIR",
+    "PROJECT_ROOT",
+    "RAW_DIR",
+    "finite_nonnegative",
+    "finite_request_rate",
+    "legacy_identity_fields",
+    "manifest_identity_fields",
+    "metadata_from",
+    "result_value",
+    "summary_values_equal",
+    "summarize_file",
+    "validate_complete_bundle_for_raw",
+    "validate_result",
+    "validate_summary_evidence_rows",
+]
 
 def validate_complete_bundle_for_raw(path: Path) -> str:
     """Compatibility wrapper that honours this module's configurable roots."""
@@ -106,6 +130,11 @@ def parse_args() -> argparse.Namespace:
         "--pattern",
         default="baseline-*.json",
         help="Glob under results/raw/ (default: baseline-*.json)",
+    )
+    parser.add_argument(
+        "--accepted-attempts",
+        type=Path,
+        help="TSV ledger selecting one complete attempt for each logical plan row",
     )
     parser.add_argument(
         "--output",
@@ -145,10 +174,25 @@ def _admit_raw(path: Path, *, allow_legacy_unmanifested: bool) -> tuple[str, dic
 def main() -> int:
     args = parse_args()
     SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
-    paths = sorted(RAW_DIR.glob(args.pattern))
+    if args.accepted_attempts:
+        if args.allow_legacy_unmanifested:
+            raise ValueError(
+                "--accepted-attempts cannot be combined with legacy admission"
+            )
+        run_ids = load_accepted_run_ids(
+            args.accepted_attempts, project_root=PROJECT_ROOT
+        )
+        paths = [RAW_DIR / f"{run_id}.json" for run_id in run_ids]
+    else:
+        paths = sorted(RAW_DIR.glob(args.pattern))
     if not paths:
         raise ValueError(
             f"No raw result files matched {args.pattern!r} under {RAW_DIR}"
+        )
+    missing_paths = [str(path) for path in paths if not path.is_file()]
+    if missing_paths:
+        raise ValueError(
+            "Accepted raw result files are missing: " + ", ".join(missing_paths)
         )
 
     rows = []

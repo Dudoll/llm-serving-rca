@@ -1,0 +1,181 @@
+{
+  "artifacts": [
+    {
+      "exists": true,
+      "name": "raw_result",
+      "path": "results/raw/baseline-in512-out128-c2-r2.json",
+      "required": true,
+      "sha256": "200a3107d56aa0be380e1018528d14dbe1065e737a73e2a2c7e9c22f4cad5ec0",
+      "size_bytes": 431861
+    },
+    {
+      "exists": true,
+      "name": "benchmark_log",
+      "path": "artifacts/logs/baseline-in512-out128-c2-r2.log",
+      "required": true,
+      "sha256": "11c6005857a676b290f41cf10563247dfe77aeef291c04289139808f91c47e08",
+      "size_bytes": 10278
+    },
+    {
+      "exists": true,
+      "name": "gpu_telemetry",
+      "path": "results/telemetry/baseline-in512-out128-c2-r2-gpu.csv",
+      "required": true,
+      "sha256": "43f588aa85f63dc51f7529185ff93d94a3b63f3430d4b716272f6e705833fb4d",
+      "size_bytes": 6505
+    },
+    {
+      "exists": true,
+      "name": "metrics_timeseries",
+      "path": "results/telemetry/baseline-in512-out128-c2-r2-metrics.jsonl",
+      "required": true,
+      "sha256": "02d19399321d6ae453adc092081dea0be7efdf8fce0b5f13fee7e2c2e9d67e3b",
+      "size_bytes": 200210
+    },
+    {
+      "exists": true,
+      "name": "metrics_before",
+      "path": "results/telemetry/baseline-in512-out128-c2-r2-metrics-before.txt",
+      "required": true,
+      "sha256": "ee156b274c6ce5de561c7a4b50faa56d9fa4e0667e8c923170f5ad21be3ee693",
+      "size_bytes": 53397
+    },
+    {
+      "exists": true,
+      "name": "metrics_after",
+      "path": "results/telemetry/baseline-in512-out128-c2-r2-metrics-after.txt",
+      "required": true,
+      "sha256": "2745a098bf773aaf4c69d37e474e36cde73ee8d5320843e51cde5179cf6ec40e",
+      "size_bytes": 53410
+    },
+    {
+      "exists": true,
+      "name": "docker_before",
+      "path": "results/telemetry/baseline-in512-out128-c2-r2-docker-before.txt",
+      "required": true,
+      "sha256": "0e5126c336dc8a8fe5ae7f3700fc73aadde5975a630030e9b10496ca981e0b80",
+      "size_bytes": 229
+    },
+    {
+      "exists": true,
+      "name": "docker_after",
+      "path": "results/telemetry/baseline-in512-out128-c2-r2-docker-after.txt",
+      "required": true,
+      "sha256": "fc0a6a125aa9259c9cb5c60c306b47faf5d4a8e69897bced71077e1ba9234a70",
+      "size_bytes": 229
+    }
+  ],
+  "collectors": {
+    "benchmark": {
+      "acceptable": true,
+      "exit_code": 0
+    },
+    "gpu": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    },
+    "metrics": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    }
+  },
+  "created_at_utc": "2026-08-11T05:00:00.946408+00:00",
+  "failure": null,
+  "git": {
+    "capture_error": null,
+    "capture_scope": "run_start",
+    "dirty": true,
+    "sha": "6ad9a54ae1958f792524e1fd0043603fc0a1f060",
+    "status_sha256": "af6ed69cdd59b5fdb0b20157fd21af903ee91b629a899874b9e2b8638cbc5563",
+    "tracked_diff_sha256": "dd758c6d0fcb16a1e26ed9e03bbd3f70c3121af99c67bace381fe1ec3b887beb",
+    "untracked_file_count": 720,
+    "untracked_source_file_count": 25,
+    "untracked_source_tree_sha256": "6a0bcc62ffe9fdacae1fe3c5e3962620279ab49e7c0ea94c38b6b4a4e38c938a",
+    "untracked_tree_sha256": "902f7af7b7bd399250d6f4326ad909b984414caf9a4c80a490d1f1b1673091db"
+  },
+  "lifecycle": [
+    {
+      "reason": "run_start",
+      "status": "planned",
+      "timestamp_utc": "2026-08-11T05:00:00.946408+00:00"
+    },
+    {
+      "reason": "benchmark process starting",
+      "status": "running",
+      "timestamp_utc": "2026-08-11T05:00:01.222154+00:00"
+    },
+    {
+      "reason": "evidence validation passed",
+      "status": "complete",
+      "timestamp_utc": "2026-08-11T05:01:16.213514+00:00"
+    }
+  ],
+  "provenance": {
+    "capture_mode": "run_start",
+    "captured_at_utc": "2026-08-11T05:00:00.946408+00:00",
+    "note": "Captured by the runner before this run started.",
+    "represents_run_time": true
+  },
+  "provenance_capture": "run_start",
+  "run_id": "baseline-in512-out128-c2-r2",
+  "schema_version": 1,
+  "server": {
+    "capture_scope": "run_start",
+    "config": {
+      "actual_container_cmd_json": "[\"Qwen/Qwen3-0.6B\",\"--port\",\"8000\",\"--revision\",\"c1899de289a04d12100db370d81485cdf75e47ca\",\"--max-model-len\",\"2048\",\"--gpu-memory-utilization\",\"0.65\",\"--generation-config\",\"vllm\",\"--seed\",\"0\",\"--no-enable-prefix-caching\",\"--enable-chunked-prefill\"]",
+      "actual_container_image_id": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_container_image_ref": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_vllm_version_json": "{\"version\":\"0.26.0\"}",
+      "container_name": "vllm-rca-server",
+      "container_server_port": "8000",
+      "enable_chunked_prefill": "true",
+      "enable_prefix_caching": "false",
+      "gpu_memory_utilization": "0.65",
+      "host_server_port": "8000",
+      "max_model_len": "2048",
+      "server_seed": "0"
+    },
+    "image": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_digest": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_name": "vllm/vllm-openai",
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "tokenizer_snapshot": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-0.6B/snapshots/c1899de289a04d12100db370d81485cdf75e47ca"
+  },
+  "status": "complete",
+  "updated_at_utc": "2026-08-11T05:01:16.213514+00:00",
+  "validation": {
+    "status": "passed",
+    "validated_at_utc": "2026-08-11T05:01:16.213499+00:00"
+  },
+  "workload": {
+    "capture_scope": "run_start",
+    "concurrency": 2,
+    "config": {
+      "between_run_seconds": "8",
+      "case": "",
+      "e2e_slo_ms": "",
+      "nominal_arrival_horizon_seconds": "",
+      "plan_block": "",
+      "plan_order": "",
+      "plan_path": "",
+      "plan_sha256": "",
+      "plan_shuffle_seed": "",
+      "run_attempt": "",
+      "run_namespace": "",
+      "tpot_slo_ms": "",
+      "ttft_slo_ms": ""
+    },
+    "input_len": 512,
+    "loadgen_seed": 0,
+    "num_prompts": 128,
+    "num_warmups": 8,
+    "output_len": 128,
+    "phase": "baseline",
+    "random_range_ratio": "0",
+    "repetition": 2,
+    "request_rate": "inf"
+  }
+}

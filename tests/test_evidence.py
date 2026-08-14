@@ -292,6 +292,47 @@ class EvidenceValidationTests(unittest.TestCase):
                 expected=self.expected,
             )
 
+    def test_accepts_bounded_fixed_input_token_drift(self) -> None:
+        raw_path = self.artifacts["raw_result"]
+        raw_result = json.loads(raw_path.read_text(encoding="utf-8"))
+        raw_result["input_lens"] = [9, 8]
+        raw_result["total_input_tokens"] = 17
+        raw_path.write_text(json.dumps(raw_result), encoding="utf-8")
+
+        validate_evidence_bundle(
+            project_root=self.project_root,
+            artifacts=self.artifacts,
+            expected=self.expected,
+        )
+
+    def test_rejects_excessive_fixed_input_token_drift(self) -> None:
+        raw_path = self.artifacts["raw_result"]
+        raw_result = json.loads(raw_path.read_text(encoding="utf-8"))
+        raw_result["input_lens"] = [10, 8]
+        raw_result["total_input_tokens"] = 18
+        raw_path.write_text(json.dumps(raw_result), encoding="utf-8")
+
+        with self.assertRaisesRegex(EvidenceValidationError, "per-request drift"):
+            validate_evidence_bundle(
+                project_root=self.project_root,
+                artifacts=self.artifacts,
+                expected=self.expected,
+            )
+
+    def test_rejects_excessive_aggregate_fixed_input_token_drift(self) -> None:
+        raw_path = self.artifacts["raw_result"]
+        raw_result = json.loads(raw_path.read_text(encoding="utf-8"))
+        raw_result["input_lens"] = [9, 9]
+        raw_result["total_input_tokens"] = 18
+        raw_path.write_text(json.dumps(raw_result), encoding="utf-8")
+
+        with self.assertRaisesRegex(EvidenceValidationError, "aggregate drift"):
+            validate_evidence_bundle(
+                project_root=self.project_root,
+                artifacts=self.artifacts,
+                expected=self.expected,
+            )
+
     def test_rejects_token_total_mismatch(self) -> None:
         raw_path = self.artifacts["raw_result"]
         raw_result = json.loads(raw_path.read_text(encoding="utf-8"))

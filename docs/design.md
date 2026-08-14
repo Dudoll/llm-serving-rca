@@ -107,8 +107,9 @@ Phase 3b 使用 **paired seed blocks**：一个 repetition/block 内，12/13/14 
 当前 planner 会把 namespace、rate、seed、repetition/block/order、nominal horizon、
 SLO 与 workload 条件写入 plan；runner 再把 namespace/attempt、plan row/path/hash 和
 SLO 写入 manifest/raw metadata。validator 校验 plan SHA-256、要求恰好匹配一行，并
-核对 raw metadata。TTFT/E2E SLO 在 checked-in config 中故意留空；runner 会拒绝
-执行，直到用户在首个正式 run 前冻结正有限阈值。
+核对 raw metadata。Phase 3b v1 的 checked-in TTFT/E2E SLO 已冻结为 200/4,000 ms；
+runner 会拒绝没有正有限阈值的后续 run，并阻止分析 CLI 使用与 frozen manifest 不一致
+的阈值。
 
 ## 4. RunBundle 与状态机
 
@@ -186,6 +187,11 @@ per-run validator 已检查：
 3. raw JSON 的 run ID、phase、workload、rate、seed、repetition 与 runner 传入的
    expected spec/manifest 一致；
 4. `completed == expected`、`failed == 0`，per-request 数组长度与 completed 一致；
+   `random_range_ratio=0` 时 output length 仍逐请求严格相等，input length 对 vLLM
+   decode/re-encode 的非双射残差采用双重上限：单请求绝对漂移上限为
+   `max(1 token, floor(目标的 1%))`，全运行累计绝对漂移上限为
+   `max(1 token, floor(计划 input tokens 的 0.01%))`；实际 min/max/mean 与漂移量
+   写入 canonical summary；
 5. metrics JSONL 至少两个 samples、相邻 sample gap 不超过 5 秒、关键指标族齐全且
    poller 无 error；GPU 与其他 sidecar 非空；
    新 run 的 benchmark/GPU/metrics exit status 都被记录且 acceptable；
@@ -233,7 +239,13 @@ duration 包含到达结束后的请求完成时间，所以这个比值不是�
 表示请求丢失；所有 8,960 个请求均成功。有限批次还能在到达结束后 drain，因此
 Phase 3a 不能证明 12 req/s 能长期稳定运行。
 
-### 6.2 Phase 3b：long-window validation toward steady state（待运行）
+### 6.2 Phase 3b: long-window validation toward steady state (completed with open gates)
+
+Phase 3b v1 has now been executed and analyzed. The 15 accepted bundles cover
+12/13/14 req/s with five paired seeds per rate, a 300-second nominal horizon,
+`MAX_CONCURRENCY=1024`, and pre-registered TTFT/E2E SLOs of 200/4,000 ms. All
+58,500 formal requests succeeded. The detailed result and limitation statement
+are in [`reports/open-loop-steady.md`](../reports/open-loop-steady.md).
 
 Phase 3b 固定 512/128 workload 和现有 server 参数，只验证边界附近 12/13/14
 req/s：
@@ -265,11 +277,12 @@ identity，runner 已实现 actual container attestation。正式 Phase 3b 还�
 2. 与 arrival window 对齐的 queue slope、end backlog 和 completion 切分；
 3. 使用 arrival-window 边界 snapshots 的 cumulative counter delta；
 4. 跨 repetition 的 P99 bootstrap CI 与同窗口 Little's Law；
-5. logical cell 到 accepted attempt 的映射和 actual execution ledger。
 
-immutable failed manifest 虽可用新 attempt 单 cell 重试，但该 retry 可能在不同时间、
-不同实际 predecessor 下执行。没有 accepted-attempt/execution ledger 时，plan 只能
-证明 planned predecessor，分析层也仍需人工筛选 failed/complete attempt。
+`accepted_attempts.py` 现在把每个 logical plan row 映射到唯一 complete attempt，记录
+attempt history、实际开始/完成时间与 actual execution order。runner 持久化 ledger；
+summary、telemetry 和 SLO consumers 只消费其中明确接受的 run ID。immutable failed
+manifest 仍原样保留。单 cell retry 可能在不同时间、不同实际 predecessor 下执行，
+因此 ledger 能审计实际顺序，但不能把 retry 当成恢复了原 planned carryover 条件。
 
 现有 queue maximum 和 benchmark-envelope before/after delta 不能替代这些稳态指标。
 
@@ -287,9 +300,9 @@ Phase 3b 的容量判定必须同时满足：
 
 ## 7. SLO、goodput 与 Little's Law
 
-SLO 必须在运行前随 ExperimentSpec/manifest 保存，不在看完曲线后选择。当前
-`open_loop_steady.env` 故意把 TTFT/E2E SLO 留空；runner 在它们为空时 fail closed。
-一旦选定，planner 会把阈值写入持久化 plan，runner 写入 manifest/raw，validator
+SLO 必须在运行前随 ExperimentSpec/manifest 保存，不在看完曲线后选择。Phase 3b v1
+已将 `open_loop_steady.env` 中的 TTFT/E2E SLO 冻结为 200/4,000 ms；runner 在它们
+为空时 fail closed。一旦选定，planner 会把阈值写入持久化 plan，runner 写入 manifest/raw，validator
 再校验阈值为正有限值、plan hash 与唯一 plan row；`analyze_slo.py` 还拒绝与 frozen
 manifest 不一致的 CLI threshold。每个请求只有同时满足正确性、TTFT SLO 和 E2E
 SLO 才计入：

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Sequence
 
 try:  # Support package import and direct execution.
+    from benchmark.accepted_attempts import load_accepted_run_ids
     from benchmark.evidence_manifest import load_manifest
     from benchmark.summarize_results import (
         MANIFEST_DIR,
@@ -21,6 +22,7 @@ try:  # Support package import and direct execution.
     )
     from benchmark.validate_evidence import artifact_paths_from_manifest
 except ModuleNotFoundError:  # pragma: no cover - direct script execution path.
+    from accepted_attempts import load_accepted_run_ids  # type: ignore[no-redef]
     from evidence_manifest import load_manifest  # type: ignore[no-redef]
     from summarize_results import (  # type: ignore[no-redef]
         MANIFEST_DIR,
@@ -375,6 +377,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="*-metrics.jsonl",
         help="Glob relative to --telemetry-dir (default: %(default)s)",
     )
+    parser.add_argument(
+        "--accepted-attempts",
+        type=Path,
+        help="TSV ledger selecting one complete attempt for each logical plan row",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(
         "--allow-poll-errors",
@@ -399,9 +406,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if Path(args.pattern).is_absolute():
         raise TelemetryError("--pattern must be relative to --telemetry-dir")
-    paths = sorted(
-        path for path in args.telemetry_dir.glob(args.pattern) if path.is_file()
-    )
+    if args.accepted_attempts:
+        if args.allow_legacy_unmanifested:
+            raise TelemetryError(
+                "--accepted-attempts cannot be combined with legacy admission"
+            )
+        run_ids = load_accepted_run_ids(
+            args.accepted_attempts, project_root=PROJECT_ROOT
+        )
+        paths = [
+            args.telemetry_dir / f"{run_id}-metrics.jsonl"
+            for run_id in run_ids
+        ]
+    else:
+        paths = sorted(
+            path for path in args.telemetry_dir.glob(args.pattern) if path.is_file()
+        )
     rows = aggregate_paths(paths)
     paths_by_run = {run_id_from_path(path): path.resolve() for path in paths}
     for row in rows:

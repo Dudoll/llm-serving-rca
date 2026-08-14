@@ -102,6 +102,18 @@ class SummarizeTests(unittest.TestCase):
         self.assertAlmostEqual(float(row["realized_send_rate"]), 10.0)
         self.assertAlmostEqual(float(row["drain_time_approx_s"]), 0.9)
 
+    def test_summarize_audits_actual_input_token_drift(self) -> None:
+        result = valid_raw_result()
+        result["input_lens"] = [514, 512]
+        with tempfile.TemporaryDirectory() as directory:
+            row = summarize_file(self.write_result(result, directory))
+        self.assertEqual(row["actual_input_len_min"], 512)
+        self.assertEqual(row["actual_input_len_max"], 514)
+        self.assertEqual(row["actual_input_len_mean"], 513)
+        self.assertEqual(row["input_token_abs_drift_total"], 2)
+        self.assertEqual(row["input_token_net_drift_total"], 2)
+        self.assertAlmostEqual(row["input_token_abs_drift_pct"], 2 / 1024 * 100)
+
     def test_summarize_rejects_incomplete_arrays(self) -> None:
         result = valid_raw_result()
         result["ttfts"] = [0.01]

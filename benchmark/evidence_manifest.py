@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
 
-"""Create and update transactional evidence manifests for benchmark runs."""
+"""Create and update transactional evidence manifests for benchmark runs.
+
+The file is intentionally organised around one lifecycle:
+
+1. ``build_manifest`` records the planned run and artifact names;
+2. ``transition_status`` moves ``planned -> running``;
+3. collectors write artifacts and ``refresh_artifacts`` records hashes;
+4. ``mark_complete`` is allowed only after the validator passes;
+5. ``mark_failed`` preserves incomplete evidence for diagnosis.
+
+The manifest is metadata about a RunBundle, not a second copy of benchmark
+metrics. Raw result values remain in the raw JSON and are validated there.
+"""
 
 from __future__ import annotations
 

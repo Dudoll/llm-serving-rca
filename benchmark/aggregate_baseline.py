@@ -68,6 +68,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", type=Path, default=SUMMARY_FILE)
     parser.add_argument("--output", type=Path, default=OUTPUT_FILE)
     parser.add_argument(
+        "--expected-repetitions",
+        type=int,
+        default=5,
+        help="Required unique repetitions per concurrency point (default: 5)",
+    )
+    parser.add_argument(
         "--allow-legacy-unmanifested",
         action="store_true",
         help="Explicitly aggregate historical summary rows without manifests",
@@ -77,6 +83,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.expected_repetitions <= 0:
+        raise ValueError("--expected-repetitions must be positive")
     # --- 1. Load per-run summary (e.g. 30 rows for 6 concurrencies x 5 reps) ---
     with args.input.open(newline="", encoding="utf-8") as input_file:
         source_rows = list(csv.DictReader(input_file))
@@ -146,6 +154,11 @@ def main() -> int:
 
         for concurrency, num_prompts, rows in ordered_groups:
             repetitions = [int(item["repetition"]) for item in rows]
+            if set(repetitions) != set(range(1, args.expected_repetitions + 1)):
+                raise ValueError(
+                    f"Baseline workload {(phase, input_len, output_len, concurrency)} "
+                    f"has repetitions {sorted(repetitions)}"
+                )
             if len(repetitions) != len(set(repetitions)):
                 raise ValueError(
                     f"Duplicate repetitions for {(phase, input_len, output_len, concurrency)}"
