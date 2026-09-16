@@ -40,6 +40,16 @@ if [[ ! "${RUN_NAMESPACE}" =~ ^[A-Za-z0-9._-]+$ ]]; then
     echo "RUN_NAMESPACE must contain only letters, digits, dot, underscore or dash." >&2
     exit 1
 fi
+
+# Phase 3b v3 has a different experiment contract: strict wall-clock dispatch,
+# window-aligned completion/queue analysis and explicit schedule-lag evidence.
+# Never let the legacy num_prompts=rate*duration path create v3-labelled data.
+if [[ "${RUN_NAMESPACE}" =~ ^phase3b-v3([._-].*)?$ ]]; then
+    echo "Refusing to run ${RUN_NAMESPACE} through the legacy finite Phase 3b runner." >&2
+    echo "Implement/use the strict fixed-window v3 runner defined in docs/phase3b-v3.md." >&2
+    exit 2
+fi
+
 if [[ ! "${RUN_ATTEMPT}" =~ ^[1-9][0-9]*$ ]]; then
     echo "RUN_ATTEMPT must be a positive integer." >&2
     exit 1
