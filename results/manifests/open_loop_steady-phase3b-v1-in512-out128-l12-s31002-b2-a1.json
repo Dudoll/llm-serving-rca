@@ -1,0 +1,185 @@
+{
+  "artifacts": [
+    {
+      "exists": true,
+      "name": "raw_result",
+      "path": "results/raw/open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1.json",
+      "required": true,
+      "sha256": "8e98b9081d8c63702066a683295cef6de15b62b332dd3eddeb0912f537202c0e",
+      "size_bytes": 11913535
+    },
+    {
+      "exists": true,
+      "name": "benchmark_log",
+      "path": "artifacts/logs/open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1.log",
+      "required": true,
+      "sha256": "3b620d6429989ce2f99362a146d1fb90e02d6af53c305b6751f059715abdd64f",
+      "size_bytes": 84345
+    },
+    {
+      "exists": true,
+      "name": "gpu_telemetry",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1-gpu.csv",
+      "required": true,
+      "sha256": "f4f1c5da09bfec90c71251aa240750d6d11047e1e60d7e27407cf6c274526698",
+      "size_bytes": 29085
+    },
+    {
+      "exists": true,
+      "name": "metrics_timeseries",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1-metrics.jsonl",
+      "required": true,
+      "sha256": "1f9a4b8f7b9acc8743e003b5c960ba2ea2b4ddeb12ad6ba630a5cbeffc3c10e1",
+      "size_bytes": 911367
+    },
+    {
+      "exists": true,
+      "name": "metrics_before",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1-metrics-before.txt",
+      "required": true,
+      "sha256": "daef07c235bd47e6b29e2d3dff5d95079f1532969ace6f17ec8ee95a3ce17183",
+      "size_bytes": 53998
+    },
+    {
+      "exists": true,
+      "name": "metrics_after",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1-metrics-after.txt",
+      "required": true,
+      "sha256": "3d5de50f57c1aee1ef9fe4e8c1d99847f6cd7d33b295d87f9a55d10db4f17260",
+      "size_bytes": 53995
+    },
+    {
+      "exists": true,
+      "name": "docker_before",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1-docker-before.txt",
+      "required": true,
+      "sha256": "3face20dffeb300183f88a003e3a6817f8b92843c9068dac43621d5e56016c7f",
+      "size_bytes": 227
+    },
+    {
+      "exists": true,
+      "name": "docker_after",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1-docker-after.txt",
+      "required": true,
+      "sha256": "790b404d0a10188e6826de9ae4910ae8cea927084d3b5237026490613a6a62b1",
+      "size_bytes": 227
+    }
+  ],
+  "collectors": {
+    "benchmark": {
+      "acceptable": true,
+      "exit_code": 0
+    },
+    "gpu": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    },
+    "metrics": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    }
+  },
+  "created_at_utc": "2026-08-12T06:27:38.468451+00:00",
+  "failure": {
+    "exit_code": 1,
+    "failed_at_utc": "2026-08-12T06:33:08.305698+00:00",
+    "reason": "evidence validation failed"
+  },
+  "git": {
+    "capture_error": null,
+    "capture_scope": "run_start",
+    "dirty": true,
+    "sha": "5dc8bf02ba5ffb07366cc886a625ba15914fa9e9",
+    "status_sha256": "aa5b5c1910ecaf76646a1a13470b7f8a97639aa466f74684314e1a2ca25a91b7",
+    "tracked_diff_sha256": "dc1a3d8d2b541bdd61d99c600638a1c70ccb7c3188a39f6033eeb8502a806d0d",
+    "untracked_file_count": 100,
+    "untracked_source_file_count": 4,
+    "untracked_source_tree_sha256": "c0ec311aafc5b1a51152bf2c583b54910d328066953aa007d78e877c515e7575",
+    "untracked_tree_sha256": "2183f71fa07bb33b228608115a3efca5e59216cb5d5b0872589ca5c66c05e13b"
+  },
+  "lifecycle": [
+    {
+      "reason": "run_start",
+      "status": "planned",
+      "timestamp_utc": "2026-08-12T06:27:38.468451+00:00"
+    },
+    {
+      "reason": "benchmark process starting",
+      "status": "running",
+      "timestamp_utc": "2026-08-12T06:27:38.714110+00:00"
+    },
+    {
+      "reason": "evidence validation failed",
+      "status": "failed",
+      "timestamp_utc": "2026-08-12T06:33:08.305719+00:00"
+    }
+  ],
+  "provenance": {
+    "capture_mode": "run_start",
+    "captured_at_utc": "2026-08-12T06:27:38.468451+00:00",
+    "note": "Captured by the runner before this run started.",
+    "represents_run_time": true
+  },
+  "provenance_capture": "run_start",
+  "run_id": "open_loop_steady-phase3b-v1-in512-out128-l12-s31002-b2-a1",
+  "schema_version": 1,
+  "server": {
+    "capture_scope": "run_start",
+    "config": {
+      "actual_container_cmd_json": "[\"Qwen/Qwen3-0.6B\",\"--port\",\"8000\",\"--revision\",\"c1899de289a04d12100db370d81485cdf75e47ca\",\"--max-model-len\",\"2048\",\"--gpu-memory-utilization\",\"0.65\",\"--generation-config\",\"vllm\",\"--seed\",\"0\",\"--no-enable-prefix-caching\",\"--enable-chunked-prefill\"]",
+      "actual_container_image_id": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_container_image_ref": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_vllm_version_json": "{\"version\":\"0.26.0\"}",
+      "container_name": "vllm-rca-server",
+      "container_server_port": "8000",
+      "enable_chunked_prefill": "true",
+      "enable_prefix_caching": "false",
+      "gpu_memory_utilization": "0.65",
+      "host_server_port": "8000",
+      "max_model_len": "2048",
+      "server_seed": "0"
+    },
+    "image": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_digest": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_name": "vllm/vllm-openai",
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "tokenizer_snapshot": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-0.6B/snapshots/c1899de289a04d12100db370d81485cdf75e47ca"
+  },
+  "status": "failed",
+  "updated_at_utc": "2026-08-12T06:33:08.305719+00:00",
+  "validation": {
+    "status": "failed",
+    "validated_at_utc": null
+  },
+  "workload": {
+    "capture_scope": "run_start",
+    "concurrency": 1024,
+    "config": {
+      "between_run_seconds": "8",
+      "case": "",
+      "e2e_slo_ms": "4000",
+      "nominal_arrival_horizon_seconds": "300",
+      "plan_block": "2",
+      "plan_order": "1",
+      "plan_path": "results/plans/phase3b-v1-open-loop-steady-plan.tsv",
+      "plan_sha256": "077b576dcb25c61c17616263ce94b6633542cfd75ff6b55477c5498301a41ffe",
+      "plan_shuffle_seed": "20260810",
+      "run_attempt": "1",
+      "run_namespace": "phase3b-v1",
+      "tpot_slo_ms": "",
+      "ttft_slo_ms": "200"
+    },
+    "input_len": 512,
+    "loadgen_seed": 31002,
+    "num_prompts": 3600,
+    "num_warmups": 8,
+    "output_len": 128,
+    "phase": "open_loop_steady",
+    "random_range_ratio": "0",
+    "repetition": 2,
+    "request_rate": "12"
+  }
+}

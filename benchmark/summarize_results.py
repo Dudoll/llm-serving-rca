@@ -1,137 +1,224 @@
 #!/usr/bin/env python3
+"""CLI for turning raw benchmark JSON into a per-run summary CSV.
+
+The implementation is intentionally an orchestrator.  The four boundaries
+below keep the project readable:
+
+* ``result_contract`` validates the shape of raw JSON;
+* ``evidence_admission`` decides whether a run is trustworthy;
+* ``result_normalization`` derives one canonical row;
+* ``gain_calculation`` compares rows within one ExperimentSpec.
+
+The public imports at the bottom are compatibility aliases for the other
+analysis CLIs and for older notebooks.
+"""
 
 from __future__ import annotations
 
+import argparse
 import csv
-import json
-from collections import defaultdict
+import sys
 from pathlib import Path
 
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from benchmark.accepted_attempts import load_accepted_run_ids
+
+try:  # Support both package imports and direct execution from the repo root.
+    from benchmark.evidence_admission import (
+        PROJECT_ROOT,
+        validate_complete_bundle_for_raw as _validate_complete_bundle_for_raw,
+        validate_summary_evidence_rows as _validate_summary_evidence_rows,
+    )
+    from benchmark.evidence_manifest import load_manifest
+    from benchmark.experiment_identity import (
+        legacy_identity_fields,
+        manifest_identity_fields,
+    )
+    from benchmark.gain_calculation import add_percent_gains
+    from benchmark.result_contract import (
+        BASE_FIELDS,
+        FIELDS,
+        finite_nonnegative,
+        finite_request_rate,
+        metadata_from,
+        result_value,
+        validate_result,
+    )
+    from benchmark.result_normalization import summarize_file, summary_values_equal
+except ModuleNotFoundError:  # pragma: no cover - direct script execution.
+    from evidence_admission import (  # type: ignore[no-redef]
+        PROJECT_ROOT,
+        validate_complete_bundle_for_raw as _validate_complete_bundle_for_raw,
+        validate_summary_evidence_rows as _validate_summary_evidence_rows,
+    )
+    from evidence_manifest import load_manifest  # type: ignore[no-redef]
+    from experiment_identity import (  # type: ignore[no-redef]
+        legacy_identity_fields,
+        manifest_identity_fields,
+    )
+    from gain_calculation import add_percent_gains  # type: ignore[no-redef]
+    from result_contract import (  # type: ignore[no-redef]
+        BASE_FIELDS,
+        FIELDS,
+        finite_nonnegative,
+        finite_request_rate,
+        metadata_from,
+        result_value,
+        validate_result,
+    )
+    from result_normalization import (  # type: ignore[no-redef]
+        summarize_file,
+        summary_values_equal,
+    )
+
+
 RAW_DIR = PROJECT_ROOT / "results" / "raw"
 SUMMARY_DIR = PROJECT_ROOT / "results" / "summary"
+MANIFEST_DIR = PROJECT_ROOT / "results" / "manifests"
 
-BASE_FIELDS = [
-    "run_id",
-    "input_len",
-    "output_len",
-    "concurrency",
-    "repetition",
-    "completed",
-    "failed",
-    "duration",
-    "request_throughput",
-    "input_throughput",
-    "output_throughput",
-    "total_token_throughput",
-    "mean_ttft_ms",
-    "p50_ttft_ms",
-    "p95_ttft_ms",
-    "p99_ttft_ms",
-    "mean_tpot_ms",
-    "p50_tpot_ms",
-    "p95_tpot_ms",
-    "p99_tpot_ms",
-    "mean_itl_ms",
-    "p50_itl_ms",
-    "p95_itl_ms",
-    "p99_itl_ms",
-    "mean_e2el_ms",
-    "p50_e2el_ms",
-    "p95_e2el_ms",
-    "p99_e2el_ms",
+# These names are intentionally re-exported for the existing analysis CLIs.
+# Keeping the compatibility surface explicit prevents future refactors from
+# accidentally deleting an import that is part of the repository API.
+__all__ = [
+    "BASE_FIELDS",
+    "FIELDS",
+    "MANIFEST_DIR",
+    "PROJECT_ROOT",
+    "RAW_DIR",
+    "finite_nonnegative",
+    "finite_request_rate",
+    "legacy_identity_fields",
+    "manifest_identity_fields",
+    "metadata_from",
+    "result_value",
+    "summary_values_equal",
+    "summarize_file",
+    "validate_complete_bundle_for_raw",
+    "validate_result",
+    "validate_summary_evidence_rows",
 ]
 
-# Percent change vs concurrency=1 and vs previous concurrency (same workload + repetition).
-GAIN_METRICS = (
-    "request_throughput",
-    "output_throughput",
-    "p50_ttft_ms",
-    "p95_ttft_ms",
-    "p99_ttft_ms",
-    "p99_tpot_ms",
-    "p99_itl_ms",
-    "p99_e2el_ms",
-)
-
-GAIN_FIELDS = [
-    field
-    for metric in GAIN_METRICS
-    for field in (f"{metric}_gain_vs_c1_pct", f"{metric}_gain_vs_previous_pct")
-]
-
-FIELDS = [*BASE_FIELDS, *GAIN_FIELDS]
+def validate_complete_bundle_for_raw(path: Path) -> str:
+    """Compatibility wrapper that honours this module's configurable roots."""
+    return _validate_complete_bundle_for_raw(
+        path,
+        project_root=PROJECT_ROOT,
+        manifest_dir=MANIFEST_DIR,
+    )
 
 
-def metadata_from(result: dict) -> dict:
-    metadata = result.get("metadata")
-    if isinstance(metadata, dict):
-        return metadata
-    return {}
+def validate_summary_evidence_rows(
+    rows: list[dict[str, str]], *, allow_legacy_unmanifested: bool
+) -> None:
+    """Compatibility wrapper for aggregate consumers and test fixtures."""
+    _validate_summary_evidence_rows(
+        rows,
+        allow_legacy_unmanifested=allow_legacy_unmanifested,
+        project_root=PROJECT_ROOT,
+        raw_dir=RAW_DIR,
+        manifest_dir=MANIFEST_DIR,
+    )
 
 
-def pct_change(current: float, baseline: float) -> float:
-    return (current / baseline - 1.0) * 100.0
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Summarize vLLM benchmark JSON runs into a CSV"
+    )
+    parser.add_argument(
+        "--pattern",
+        default="baseline-*.json",
+        help="Glob under results/raw/ (default: baseline-*.json)",
+    )
+    parser.add_argument(
+        "--accepted-attempts",
+        type=Path,
+        help="TSV ledger selecting one complete attempt for each logical plan row",
+    )
+    parser.add_argument(
+        "--output",
+        default="baseline-summary.csv",
+        help="Output CSV file (default: baseline-summary.csv)",
+    )
+    parser.add_argument(
+        "--no-gains",
+        action="store_true",
+        help="Do not calculate percent gains",
+    )
+    parser.add_argument(
+        "--allow-legacy-unmanifested",
+        action="store_true",
+        help=(
+            "Explicitly admit historical raw files without manifests; "
+            "rows are labelled legacy-unmanifested"
+        ),
+    )
+    return parser.parse_args()
 
 
-def summarize_file(path: Path) -> dict | None:
-    result = json.loads(path.read_text(encoding="utf-8"))
-    if "request_throughput" not in result:
-        return None
-
-    metadata = metadata_from(result)
-    row = {field: result.get(field, "") for field in BASE_FIELDS}
-    if not row["input_throughput"] and result.get("duration"):
-        row["input_throughput"] = result.get("total_input_tokens", 0) / result["duration"]
-    row["run_id"] = metadata.get("run_id", result.get("run_id", path.stem))
-    for key in ("input_len", "output_len", "concurrency", "repetition"):
-        row[key] = metadata.get(key, result.get(key, row.get(key, "")))
-    return row
-
-
-def add_percent_gains(rows: list[dict]) -> None:
-    grouped: dict[tuple[int, int, int], list[dict]] = defaultdict(list)
-    for row in rows:
-        grouped[
-            (int(row["input_len"]), int(row["output_len"]), int(row["repetition"]))
-        ].append(row)
-
-    for group_rows in grouped.values():
-        ordered = sorted(group_rows, key=lambda item: int(item["concurrency"]))
-        c1 = next((item for item in ordered if int(item["concurrency"]) == 1), None)
-        previous: dict | None = None
-
-        for row in ordered:
-            for metric in GAIN_METRICS:
-                current = float(row[metric])
-                if c1 is None or float(c1[metric]) == 0:
-                    row[f"{metric}_gain_vs_c1_pct"] = ""
-                else:
-                    row[f"{metric}_gain_vs_c1_pct"] = pct_change(current, float(c1[metric]))
-
-                if previous is None or float(previous[metric]) == 0:
-                    row[f"{metric}_gain_vs_previous_pct"] = ""
-                else:
-                    row[f"{metric}_gain_vs_previous_pct"] = pct_change(
-                        current, float(previous[metric])
-                    )
-            previous = row
+def _admit_raw(path: Path, *, allow_legacy_unmanifested: bool) -> tuple[str, dict]:
+    """Return evidence status and fixed-factor identity for one raw file."""
+    manifest_path = MANIFEST_DIR / f"{path.stem}.json"
+    if manifest_path.exists():
+        status = validate_complete_bundle_for_raw(path)
+        return status, manifest_identity_fields(load_manifest(manifest_path))
+    if allow_legacy_unmanifested:
+        return "legacy-unmanifested", legacy_identity_fields()
+    raise ValueError(
+        f"Missing manifest for {path}; backfill and validate the bundle, or use "
+        "--allow-legacy-unmanifested for an explicitly labelled historical rebuild"
+    )
 
 
 def main() -> int:
+    args = parse_args()
     SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
+    if args.accepted_attempts:
+        if args.allow_legacy_unmanifested:
+            raise ValueError(
+                "--accepted-attempts cannot be combined with legacy admission"
+            )
+        run_ids = load_accepted_run_ids(
+            args.accepted_attempts, project_root=PROJECT_ROOT
+        )
+        paths = [RAW_DIR / f"{run_id}.json" for run_id in run_ids]
+    else:
+        paths = sorted(RAW_DIR.glob(args.pattern))
+    if not paths:
+        raise ValueError(
+            f"No raw result files matched {args.pattern!r} under {RAW_DIR}"
+        )
+    missing_paths = [str(path) for path in paths if not path.is_file()]
+    if missing_paths:
+        raise ValueError(
+            "Accepted raw result files are missing: " + ", ".join(missing_paths)
+        )
+
     rows = []
-    for path in sorted(RAW_DIR.glob("baseline-*.json")):
+    for path in paths:
+        evidence_status, identity = _admit_raw(
+            path, allow_legacy_unmanifested=args.allow_legacy_unmanifested
+        )
         row = summarize_file(path)
-        if row:
-            rows.append(row)
+        row.update(identity)
+        row["evidence_status"] = evidence_status
+        rows.append(row)
 
-    add_percent_gains(rows)
+    if not args.no_gains:
+        add_percent_gains(rows)
+        fieldnames = FIELDS
+    else:
+        fieldnames = BASE_FIELDS
 
-    output_path = SUMMARY_DIR / "baseline-summary.csv"
+    output_path = SUMMARY_DIR / args.output
     with output_path.open("w", newline="", encoding="utf-8") as output_file:
-        writer = csv.DictWriter(output_file, fieldnames=FIELDS)
+        writer = csv.DictWriter(
+            output_file,
+            fieldnames=fieldnames,
+            extrasaction="ignore",
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
 

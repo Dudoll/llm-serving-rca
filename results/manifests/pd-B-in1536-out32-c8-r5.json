@@ -1,0 +1,181 @@
+{
+  "artifacts": [
+    {
+      "exists": true,
+      "name": "raw_result",
+      "path": "results/raw/pd-B-in1536-out32-c8-r5.json",
+      "required": true,
+      "sha256": "26296ba580ee1426db0e9016e85738e87621a63a8355032509a3540bb0b20269",
+      "size_bytes": 54964
+    },
+    {
+      "exists": true,
+      "name": "benchmark_log",
+      "path": "artifacts/logs/pd-B-in1536-out32-c8-r5.log",
+      "required": true,
+      "sha256": "89cbfe3eaa212042cf04456d9e70e096757c14a8c10ab286cfeb735f5b8232a7",
+      "size_bytes": 7546
+    },
+    {
+      "exists": true,
+      "name": "gpu_telemetry",
+      "path": "results/telemetry/pd-B-in1536-out32-c8-r5-gpu.csv",
+      "required": true,
+      "sha256": "a28686d7a9acd4e1b32cf9ea368f27e3abe6df111364ba524bfc82064865052b",
+      "size_bytes": 2270
+    },
+    {
+      "exists": true,
+      "name": "metrics_timeseries",
+      "path": "results/telemetry/pd-B-in1536-out32-c8-r5-metrics.jsonl",
+      "required": true,
+      "sha256": "fd09fc7ba2430d14ea9fcf68926d567d695186f59329aa75fdb379f44b69ca2f",
+      "size_bytes": 64640
+    },
+    {
+      "exists": true,
+      "name": "metrics_before",
+      "path": "results/telemetry/pd-B-in1536-out32-c8-r5-metrics-before.txt",
+      "required": true,
+      "sha256": "ac7bb05ef167775ce86a7387fdd69f066810416acc255b2bc9907c78947092c8",
+      "size_bytes": 53685
+    },
+    {
+      "exists": true,
+      "name": "metrics_after",
+      "path": "results/telemetry/pd-B-in1536-out32-c8-r5-metrics-after.txt",
+      "required": true,
+      "sha256": "b439c97920dd3625c91abea1f771634f28879df6e3cc04bc803b9c720f2ee856",
+      "size_bytes": 53685
+    },
+    {
+      "exists": true,
+      "name": "docker_before",
+      "path": "results/telemetry/pd-B-in1536-out32-c8-r5-docker-before.txt",
+      "required": true,
+      "sha256": "a06bfa1579dc3c3cd54acb829465613f90bf187a20aeec50a07a0c06250f8b30",
+      "size_bytes": 227
+    },
+    {
+      "exists": true,
+      "name": "docker_after",
+      "path": "results/telemetry/pd-B-in1536-out32-c8-r5-docker-after.txt",
+      "required": true,
+      "sha256": "2619336c7239284beb01c692ddec7b056ee0b47bd455909ed6f942ab5f3a0fa1",
+      "size_bytes": 227
+    }
+  ],
+  "collectors": {
+    "benchmark": {
+      "acceptable": true,
+      "exit_code": 0
+    },
+    "gpu": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    },
+    "metrics": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    }
+  },
+  "created_at_utc": "2026-08-11T06:16:36.000729+00:00",
+  "failure": null,
+  "git": {
+    "capture_error": null,
+    "capture_scope": "run_start",
+    "dirty": true,
+    "sha": "6ad9a54ae1958f792524e1fd0043603fc0a1f060",
+    "status_sha256": "87d556d23b60559e043a3d697210190723a1731f9acaf4dff751b7e4714cbe56",
+    "tracked_diff_sha256": "cbcbf4eca869d30868baa1be5c68fc18243d277a7f58762db29a5dd0d0bd7f65",
+    "untracked_file_count": 753,
+    "untracked_source_file_count": 25,
+    "untracked_source_tree_sha256": "6a0bcc62ffe9fdacae1fe3c5e3962620279ab49e7c0ea94c38b6b4a4e38c938a",
+    "untracked_tree_sha256": "a881d5fccf98bc967009ef600a68c0fea6bec58a0aa204286820f706086a23e8"
+  },
+  "lifecycle": [
+    {
+      "reason": "run_start",
+      "status": "planned",
+      "timestamp_utc": "2026-08-11T06:16:36.000729+00:00"
+    },
+    {
+      "reason": "benchmark process starting",
+      "status": "running",
+      "timestamp_utc": "2026-08-11T06:16:36.319107+00:00"
+    },
+    {
+      "reason": "evidence validation passed",
+      "status": "complete",
+      "timestamp_utc": "2026-08-11T06:17:02.979041+00:00"
+    }
+  ],
+  "provenance": {
+    "capture_mode": "run_start",
+    "captured_at_utc": "2026-08-11T06:16:36.000729+00:00",
+    "note": "Captured by the runner before this run started.",
+    "represents_run_time": true
+  },
+  "provenance_capture": "run_start",
+  "run_id": "pd-B-in1536-out32-c8-r5",
+  "schema_version": 1,
+  "server": {
+    "capture_scope": "run_start",
+    "config": {
+      "actual_container_cmd_json": "[\"Qwen/Qwen3-0.6B\",\"--port\",\"8000\",\"--revision\",\"c1899de289a04d12100db370d81485cdf75e47ca\",\"--max-model-len\",\"2048\",\"--gpu-memory-utilization\",\"0.65\",\"--generation-config\",\"vllm\",\"--seed\",\"0\",\"--no-enable-prefix-caching\",\"--enable-chunked-prefill\"]",
+      "actual_container_image_id": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_container_image_ref": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_vllm_version_json": "{\"version\":\"0.26.0\"}",
+      "container_name": "vllm-rca-server",
+      "container_server_port": "8000",
+      "enable_chunked_prefill": "true",
+      "enable_prefix_caching": "false",
+      "gpu_memory_utilization": "0.65",
+      "host_server_port": "8000",
+      "max_model_len": "2048",
+      "server_seed": "0"
+    },
+    "image": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_digest": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_name": "vllm/vllm-openai",
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "tokenizer_snapshot": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-0.6B/snapshots/c1899de289a04d12100db370d81485cdf75e47ca"
+  },
+  "status": "complete",
+  "updated_at_utc": "2026-08-11T06:17:02.979041+00:00",
+  "validation": {
+    "status": "passed",
+    "validated_at_utc": "2026-08-11T06:17:02.979027+00:00"
+  },
+  "workload": {
+    "capture_scope": "run_start",
+    "concurrency": 8,
+    "config": {
+      "between_run_seconds": "8",
+      "case": "B",
+      "e2e_slo_ms": "",
+      "nominal_arrival_horizon_seconds": "",
+      "plan_block": "",
+      "plan_order": "",
+      "plan_path": "",
+      "plan_sha256": "",
+      "plan_shuffle_seed": "",
+      "run_attempt": "",
+      "run_namespace": "",
+      "tpot_slo_ms": "",
+      "ttft_slo_ms": ""
+    },
+    "input_len": 1536,
+    "loadgen_seed": 0,
+    "num_prompts": 64,
+    "num_warmups": 8,
+    "output_len": 32,
+    "phase": "prefill_decode",
+    "random_range_ratio": "0",
+    "repetition": 5,
+    "request_rate": "inf"
+  }
+}

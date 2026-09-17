@@ -1,0 +1,181 @@
+{
+  "artifacts": [
+    {
+      "exists": true,
+      "name": "raw_result",
+      "path": "results/raw/open_loop-in512-out128-l4-r5.json",
+      "required": true,
+      "sha256": "f912b3c17356efd21c4606441a975a14fb702b9a2a4ca920966694a9e1585af9",
+      "size_bytes": 865673
+    },
+    {
+      "exists": true,
+      "name": "benchmark_log",
+      "path": "artifacts/logs/open_loop-in512-out128-l4-r5.log",
+      "required": true,
+      "sha256": "b5258c8d0d202541176f5448c6930be41e1fcb728535f301044b5a8c3a7f4f41",
+      "size_bytes": 16367
+    },
+    {
+      "exists": true,
+      "name": "gpu_telemetry",
+      "path": "results/telemetry/open_loop-in512-out128-l4-r5-gpu.csv",
+      "required": true,
+      "sha256": "cad501aba669eb9853950a5d9bfd0fa98a1be26393b26713960c2595fc770754",
+      "size_bytes": 7277
+    },
+    {
+      "exists": true,
+      "name": "metrics_timeseries",
+      "path": "results/telemetry/open_loop-in512-out128-l4-r5-metrics.jsonl",
+      "required": true,
+      "sha256": "61fd9b663fa36021333aa5ba4bfa9e9742f70d68a0ae76942a533a8727f19883",
+      "size_bytes": 222383
+    },
+    {
+      "exists": true,
+      "name": "metrics_before",
+      "path": "results/telemetry/open_loop-in512-out128-l4-r5-metrics-before.txt",
+      "required": true,
+      "sha256": "b72c3f22dcf5f6ac862c30fe4f96d7a0981406ada0946d76ba935cdf0b53bd4d",
+      "size_bytes": 53679
+    },
+    {
+      "exists": true,
+      "name": "metrics_after",
+      "path": "results/telemetry/open_loop-in512-out128-l4-r5-metrics-after.txt",
+      "required": true,
+      "sha256": "81fc0319990b4b159710685df6403b92c6809f517da45688944b616cc633973d",
+      "size_bytes": 53693
+    },
+    {
+      "exists": true,
+      "name": "docker_before",
+      "path": "results/telemetry/open_loop-in512-out128-l4-r5-docker-before.txt",
+      "required": true,
+      "sha256": "5086a08471aa60d1f56daf8fc6bc127b54f0ab7be232b7a8abfce9ffd8112aa3",
+      "size_bytes": 227
+    },
+    {
+      "exists": true,
+      "name": "docker_after",
+      "path": "results/telemetry/open_loop-in512-out128-l4-r5-docker-after.txt",
+      "required": true,
+      "sha256": "9bc262894a499519ede85aa834ba2a125ad8ea35e0fbcd6dd1edcfbdbdfe5bce",
+      "size_bytes": 227
+    }
+  ],
+  "collectors": {
+    "benchmark": {
+      "acceptable": true,
+      "exit_code": 0
+    },
+    "gpu": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    },
+    "metrics": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    }
+  },
+  "created_at_utc": "2026-08-11T06:40:34.147784+00:00",
+  "failure": null,
+  "git": {
+    "capture_error": null,
+    "capture_scope": "run_start",
+    "dirty": true,
+    "sha": "6ad9a54ae1958f792524e1fd0043603fc0a1f060",
+    "status_sha256": "a68148bd3c09a501be16e8760ff9d51013989f0159ae13f0512bae8a2e466d25",
+    "tracked_diff_sha256": "cbcbf4eca869d30868baa1be5c68fc18243d277a7f58762db29a5dd0d0bd7f65",
+    "untracked_file_count": 768,
+    "untracked_source_file_count": 25,
+    "untracked_source_tree_sha256": "6a0bcc62ffe9fdacae1fe3c5e3962620279ab49e7c0ea94c38b6b4a4e38c938a",
+    "untracked_tree_sha256": "6c0fc1614e3a452bcd11e3c91ffb871c5c5216fc49106e1284dbcd36457f5f7e"
+  },
+  "lifecycle": [
+    {
+      "reason": "run_start",
+      "status": "planned",
+      "timestamp_utc": "2026-08-11T06:40:34.147784+00:00"
+    },
+    {
+      "reason": "benchmark process starting",
+      "status": "running",
+      "timestamp_utc": "2026-08-11T06:40:34.486679+00:00"
+    },
+    {
+      "reason": "evidence validation passed",
+      "status": "complete",
+      "timestamp_utc": "2026-08-11T06:41:58.173583+00:00"
+    }
+  ],
+  "provenance": {
+    "capture_mode": "run_start",
+    "captured_at_utc": "2026-08-11T06:40:34.147784+00:00",
+    "note": "Captured by the runner before this run started.",
+    "represents_run_time": true
+  },
+  "provenance_capture": "run_start",
+  "run_id": "open_loop-in512-out128-l4-r5",
+  "schema_version": 1,
+  "server": {
+    "capture_scope": "run_start",
+    "config": {
+      "actual_container_cmd_json": "[\"Qwen/Qwen3-0.6B\",\"--port\",\"8000\",\"--revision\",\"c1899de289a04d12100db370d81485cdf75e47ca\",\"--max-model-len\",\"2048\",\"--gpu-memory-utilization\",\"0.65\",\"--generation-config\",\"vllm\",\"--seed\",\"0\",\"--no-enable-prefix-caching\",\"--enable-chunked-prefill\"]",
+      "actual_container_image_id": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_container_image_ref": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_vllm_version_json": "{\"version\":\"0.26.0\"}",
+      "container_name": "vllm-rca-server",
+      "container_server_port": "8000",
+      "enable_chunked_prefill": "true",
+      "enable_prefix_caching": "false",
+      "gpu_memory_utilization": "0.65",
+      "host_server_port": "8000",
+      "max_model_len": "2048",
+      "server_seed": "0"
+    },
+    "image": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_digest": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_name": "vllm/vllm-openai",
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "tokenizer_snapshot": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-0.6B/snapshots/c1899de289a04d12100db370d81485cdf75e47ca"
+  },
+  "status": "complete",
+  "updated_at_utc": "2026-08-11T06:41:58.173583+00:00",
+  "validation": {
+    "status": "passed",
+    "validated_at_utc": "2026-08-11T06:41:58.173567+00:00"
+  },
+  "workload": {
+    "capture_scope": "run_start",
+    "concurrency": 256,
+    "config": {
+      "between_run_seconds": "8",
+      "case": "",
+      "e2e_slo_ms": "",
+      "nominal_arrival_horizon_seconds": "",
+      "plan_block": "",
+      "plan_order": "",
+      "plan_path": "",
+      "plan_sha256": "",
+      "plan_shuffle_seed": "",
+      "run_attempt": "",
+      "run_namespace": "",
+      "tpot_slo_ms": "",
+      "ttft_slo_ms": ""
+    },
+    "input_len": 512,
+    "loadgen_seed": 0,
+    "num_prompts": 256,
+    "num_warmups": 8,
+    "output_len": 128,
+    "phase": "open_loop",
+    "random_range_ratio": "0",
+    "repetition": 5,
+    "request_rate": "4"
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "artifacts": [
+    {
+      "exists": true,
+      "name": "raw_result",
+      "path": "results/raw/open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2.json",
+      "required": true,
+      "sha256": "33565bff35cd5fb53ca30e756b9488420af4c05d9881dfd4b095094eaff623e6",
+      "size_bytes": 12874188
+    },
+    {
+      "exists": true,
+      "name": "benchmark_log",
+      "path": "artifacts/logs/open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2.log",
+      "required": true,
+      "sha256": "f0a4e8cd9f121a2f7ff6e89f91d35159a127cd121c47969140ed509ea5733995",
+      "size_bytes": 81976
+    },
+    {
+      "exists": true,
+      "name": "gpu_telemetry",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2-gpu.csv",
+      "required": true,
+      "sha256": "4b8b105643a20771dc08d054fac8b02e9bae0a1c3fa3310d8ef7e56156bd7ba8",
+      "size_bytes": 29391
+    },
+    {
+      "exists": true,
+      "name": "metrics_timeseries",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2-metrics.jsonl",
+      "required": true,
+      "sha256": "d53a35243f47ceeda0d82ccf2d58e1109782045ee982ee99f9196ce06030be5a",
+      "size_bytes": 918958
+    },
+    {
+      "exists": true,
+      "name": "metrics_before",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2-metrics-before.txt",
+      "required": true,
+      "sha256": "f31ebb58082cd08ef741c8910b0635fed8ef3a841383c6820a9537acb2a21770",
+      "size_bytes": 54003
+    },
+    {
+      "exists": true,
+      "name": "metrics_after",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2-metrics-after.txt",
+      "required": true,
+      "sha256": "831453cbf3a748a58fc62f0bedef77df8f408f5c394764e55e01e8dc2b0261fc",
+      "size_bytes": 54000
+    },
+    {
+      "exists": true,
+      "name": "docker_before",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2-docker-before.txt",
+      "required": true,
+      "sha256": "6a9731b3c0397c59913a6c0654c9284685db9d936240e288d8531fe752d0d7a6",
+      "size_bytes": 227
+    },
+    {
+      "exists": true,
+      "name": "docker_after",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2-docker-after.txt",
+      "required": true,
+      "sha256": "cf8b5cd8d8d4cf68e12dc24389495ccc173f8e546d42a6a535a51f7e6d920bd9",
+      "size_bytes": 225
+    }
+  ],
+  "collectors": {
+    "benchmark": {
+      "acceptable": true,
+      "exit_code": 0
+    },
+    "gpu": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    },
+    "metrics": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    }
+  },
+  "created_at_utc": "2026-08-12T08:08:20.377650+00:00",
+  "failure": null,
+  "git": {
+    "capture_error": null,
+    "capture_scope": "run_start",
+    "dirty": true,
+    "sha": "5dc8bf02ba5ffb07366cc886a625ba15914fa9e9",
+    "status_sha256": "201f004ad7bd1c3fadb7ea7c121cbc08204b1b577ccf0c71684c2564610f3c9d",
+    "tracked_diff_sha256": "dc1a3d8d2b541bdd61d99c600638a1c70ccb7c3188a39f6033eeb8502a806d0d",
+    "untracked_file_count": 108,
+    "untracked_source_file_count": 4,
+    "untracked_source_tree_sha256": "c0ec311aafc5b1a51152bf2c583b54910d328066953aa007d78e877c515e7575",
+    "untracked_tree_sha256": "e325ea8f1066684048b3b8480f8bab9bf437a02de823bad271b530c59dbf8a09"
+  },
+  "lifecycle": [
+    {
+      "reason": "run_start",
+      "status": "planned",
+      "timestamp_utc": "2026-08-12T08:08:20.377650+00:00"
+    },
+    {
+      "reason": "benchmark process starting",
+      "status": "running",
+      "timestamp_utc": "2026-08-12T08:08:20.628358+00:00"
+    },
+    {
+      "reason": "evidence validation passed",
+      "status": "complete",
+      "timestamp_utc": "2026-08-12T08:13:53.670491+00:00"
+    }
+  ],
+  "provenance": {
+    "capture_mode": "run_start",
+    "captured_at_utc": "2026-08-12T08:08:20.377650+00:00",
+    "note": "Captured by the runner before this run started.",
+    "represents_run_time": true
+  },
+  "provenance_capture": "run_start",
+  "run_id": "open_loop_steady-phase3b-v1-in512-out128-l13-s31004-b4-a2",
+  "schema_version": 1,
+  "server": {
+    "capture_scope": "run_start",
+    "config": {
+      "actual_container_cmd_json": "[\"Qwen/Qwen3-0.6B\",\"--port\",\"8000\",\"--revision\",\"c1899de289a04d12100db370d81485cdf75e47ca\",\"--max-model-len\",\"2048\",\"--gpu-memory-utilization\",\"0.65\",\"--generation-config\",\"vllm\",\"--seed\",\"0\",\"--no-enable-prefix-caching\",\"--enable-chunked-prefill\"]",
+      "actual_container_image_id": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_container_image_ref": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_vllm_version_json": "{\"version\":\"0.26.0\"}",
+      "container_name": "vllm-rca-server",
+      "container_server_port": "8000",
+      "enable_chunked_prefill": "true",
+      "enable_prefix_caching": "false",
+      "gpu_memory_utilization": "0.65",
+      "host_server_port": "8000",
+      "max_model_len": "2048",
+      "server_seed": "0"
+    },
+    "image": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_digest": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_name": "vllm/vllm-openai",
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "tokenizer_snapshot": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-0.6B/snapshots/c1899de289a04d12100db370d81485cdf75e47ca"
+  },
+  "status": "complete",
+  "updated_at_utc": "2026-08-12T08:13:53.670491+00:00",
+  "validation": {
+    "status": "passed",
+    "validated_at_utc": "2026-08-12T08:13:53.670465+00:00"
+  },
+  "workload": {
+    "capture_scope": "run_start",
+    "concurrency": 1024,
+    "config": {
+      "between_run_seconds": "8",
+      "case": "",
+      "e2e_slo_ms": "4000",
+      "nominal_arrival_horizon_seconds": "300",
+      "plan_block": "4",
+      "plan_order": "1",
+      "plan_path": "results/plans/phase3b-v1-open-loop-steady-plan.tsv",
+      "plan_sha256": "077b576dcb25c61c17616263ce94b6633542cfd75ff6b55477c5498301a41ffe",
+      "plan_shuffle_seed": "20260810",
+      "run_attempt": "2",
+      "run_namespace": "phase3b-v1",
+      "tpot_slo_ms": "",
+      "ttft_slo_ms": "200"
+    },
+    "input_len": 512,
+    "loadgen_seed": 31004,
+    "num_prompts": 3900,
+    "num_warmups": 8,
+    "output_len": 128,
+    "phase": "open_loop_steady",
+    "random_range_ratio": "0",
+    "repetition": 4,
+    "request_rate": "13"
+  }
+}

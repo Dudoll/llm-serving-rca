@@ -1,0 +1,185 @@
+{
+  "artifacts": [
+    {
+      "exists": true,
+      "name": "raw_result",
+      "path": "results/raw/open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4.json",
+      "required": true,
+      "sha256": "79afe0028565ce8c4919d013257a340cafa0ca9aef3c68f861940cf4b8c1aa6a",
+      "size_bytes": 13904471
+    },
+    {
+      "exists": true,
+      "name": "benchmark_log",
+      "path": "artifacts/logs/open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4.log",
+      "required": true,
+      "sha256": "5c9b4df361a7d2ca18ba353b67cf1377ea2759d1696001ad32fcb15d010c37b8",
+      "size_bytes": 74490
+    },
+    {
+      "exists": true,
+      "name": "gpu_telemetry",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4-gpu.csv",
+      "required": true,
+      "sha256": "1d9ec0ab2bee2508dd36c42722a6d9f4f42918aa551ecb9da4f49417ba5c05ae",
+      "size_bytes": 35237
+    },
+    {
+      "exists": true,
+      "name": "metrics_timeseries",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4-metrics.jsonl",
+      "required": true,
+      "sha256": "fa03055098133e54f2f3addb06ee08b2a2d186b12d22312e8aed7addad8bbf8e",
+      "size_bytes": 1104447
+    },
+    {
+      "exists": true,
+      "name": "metrics_before",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4-metrics-before.txt",
+      "required": true,
+      "sha256": "201adc7e79ba9b2c9cb62ed7e3d04a24d00940bf962af467e4320f5a6c725ada",
+      "size_bytes": 54020
+    },
+    {
+      "exists": true,
+      "name": "metrics_after",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4-metrics-after.txt",
+      "required": true,
+      "sha256": "e6461214833244c80ecba750ac22808d5d914c5ab5057f77ecc009481a01a07f",
+      "size_bytes": 54030
+    },
+    {
+      "exists": true,
+      "name": "docker_before",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4-docker-before.txt",
+      "required": true,
+      "sha256": "61ceae710955e3d8164dcb7910e8cc3b2247b9c10a4bfdb3037c47a2f7747a40",
+      "size_bytes": 229
+    },
+    {
+      "exists": true,
+      "name": "docker_after",
+      "path": "results/telemetry/open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4-docker-after.txt",
+      "required": true,
+      "sha256": "12a9530d95061df6a797e8b5405d8045b3b1ee05cb38a8ecd06b1b210c03f3dc",
+      "size_bytes": 229
+    }
+  ],
+  "collectors": {
+    "benchmark": {
+      "acceptable": true,
+      "exit_code": 0
+    },
+    "gpu": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    },
+    "metrics": {
+      "acceptable": true,
+      "exit_code": 0,
+      "stop_requested_by_runner": true
+    }
+  },
+  "created_at_utc": "2026-08-12T13:07:42.990706+00:00",
+  "failure": {
+    "exit_code": 1,
+    "failed_at_utc": "2026-08-12T13:14:22.285662+00:00",
+    "reason": "evidence validation failed"
+  },
+  "git": {
+    "capture_error": null,
+    "capture_scope": "run_start",
+    "dirty": true,
+    "sha": "5dc8bf02ba5ffb07366cc886a625ba15914fa9e9",
+    "status_sha256": "d14872d7f383c314f7c84f41f456857c5c788c6dd205f9434c356eb733414262",
+    "tracked_diff_sha256": "dc1a3d8d2b541bdd61d99c600638a1c70ccb7c3188a39f6033eeb8502a806d0d",
+    "untracked_file_count": 114,
+    "untracked_source_file_count": 4,
+    "untracked_source_tree_sha256": "c0ec311aafc5b1a51152bf2c583b54910d328066953aa007d78e877c515e7575",
+    "untracked_tree_sha256": "f4bc4cb3c98dbc25ce54fd8a1097739c8cd87c47a1e26bec539c7aed2a8f7fc6"
+  },
+  "lifecycle": [
+    {
+      "reason": "run_start",
+      "status": "planned",
+      "timestamp_utc": "2026-08-12T13:07:42.990706+00:00"
+    },
+    {
+      "reason": "benchmark process starting",
+      "status": "running",
+      "timestamp_utc": "2026-08-12T13:07:43.295086+00:00"
+    },
+    {
+      "reason": "evidence validation failed",
+      "status": "failed",
+      "timestamp_utc": "2026-08-12T13:14:22.285689+00:00"
+    }
+  ],
+  "provenance": {
+    "capture_mode": "run_start",
+    "captured_at_utc": "2026-08-12T13:07:42.990706+00:00",
+    "note": "Captured by the runner before this run started.",
+    "represents_run_time": true
+  },
+  "provenance_capture": "run_start",
+  "run_id": "open_loop_steady-phase3b-v1-in512-out128-l14-s31005-b5-a4",
+  "schema_version": 1,
+  "server": {
+    "capture_scope": "run_start",
+    "config": {
+      "actual_container_cmd_json": "[\"Qwen/Qwen3-0.6B\",\"--port\",\"8000\",\"--revision\",\"c1899de289a04d12100db370d81485cdf75e47ca\",\"--max-model-len\",\"2048\",\"--gpu-memory-utilization\",\"0.65\",\"--generation-config\",\"vllm\",\"--seed\",\"0\",\"--no-enable-prefix-caching\",\"--enable-chunked-prefill\"]",
+      "actual_container_image_id": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_container_image_ref": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "actual_vllm_version_json": "{\"version\":\"0.26.0\"}",
+      "container_name": "vllm-rca-server",
+      "container_server_port": "8000",
+      "enable_chunked_prefill": "true",
+      "enable_prefix_caching": "false",
+      "gpu_memory_utilization": "0.65",
+      "host_server_port": "8000",
+      "max_model_len": "2048",
+      "server_seed": "0"
+    },
+    "image": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_digest": "sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+    "image_name": "vllm/vllm-openai",
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "tokenizer_snapshot": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-0.6B/snapshots/c1899de289a04d12100db370d81485cdf75e47ca"
+  },
+  "status": "failed",
+  "updated_at_utc": "2026-08-12T13:14:22.285689+00:00",
+  "validation": {
+    "status": "failed",
+    "validated_at_utc": null
+  },
+  "workload": {
+    "capture_scope": "run_start",
+    "concurrency": 1024,
+    "config": {
+      "between_run_seconds": "8",
+      "case": "",
+      "e2e_slo_ms": "4000",
+      "nominal_arrival_horizon_seconds": "300",
+      "plan_block": "5",
+      "plan_order": "3",
+      "plan_path": "results/plans/phase3b-v1-open-loop-steady-plan.tsv",
+      "plan_sha256": "077b576dcb25c61c17616263ce94b6633542cfd75ff6b55477c5498301a41ffe",
+      "plan_shuffle_seed": "20260810",
+      "run_attempt": "4",
+      "run_namespace": "phase3b-v1",
+      "tpot_slo_ms": "",
+      "ttft_slo_ms": "200"
+    },
+    "input_len": 512,
+    "loadgen_seed": 31005,
+    "num_prompts": 4200,
+    "num_warmups": 8,
+    "output_len": 128,
+    "phase": "open_loop_steady",
+    "random_range_ratio": "0",
+    "repetition": 5,
+    "request_rate": "14"
+  }
+}

@@ -1,0 +1,8 @@
+timestamp, index, utilization.gpu [%], utilization.memory [%], memory.used [MiB], memory.free [MiB], power.draw [W], clocks.current.sm [MHz], clocks.current.memory [MHz], temperature.gpu
+2026/08/11 15:04:31.476, 0, 0 %, 0 %, 7843 MiB, 114 MiB, [N/A], 210 MHz, 405 MHz, 50
+2026/08/11 15:04:32.483, 0, 0 %, 0 %, 7843 MiB, 114 MiB, [N/A], 210 MHz, 405 MHz, 49
+2026/08/11 15:04:33.490, 0, 0 %, 0 %, 7843 MiB, 114 MiB, [N/A], 210 MHz, 405 MHz, 49
+2026/08/11 15:04:34.496, 0, 0 %, 0 %, 7843 MiB, 114 MiB, [N/A], 210 MHz, 405 MHz, 49
+2026/08/11 15:04:35.501, 0, 0 %, 0 %, 7843 MiB, 114 MiB, [N/A], 210 MHz, 405 MHz, 49
+2026/08/11 15:04:36.506, 0, 0 %, 0 %, 7843 MiB, 114 MiB, [N/A], 210 MHz, 405 MHz, 49
+2026/08/11 15:04:37.511, 0, 0 %, 0 %, 7843 MiB, 114 MiB, [N/A], 210 MHz, 405 MHz, 49
